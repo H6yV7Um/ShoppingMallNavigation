@@ -13,7 +13,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
+        android:theme="@style/AppTheme.Base"
         android:name=".App">
 
         <meta-data android:name="com.fengmap.mapapi.appkey" android:value="b1dea0d51836e7657e5d9c98988df6b3" />
