@@ -1,6 +1,8 @@
 package com.example.xu.shoppingmallnavigation.presenter.main;
 
 import com.example.xu.shoppingmallnavigation.base.contract.main.MainContract;
+import com.fengmap.android.analysis.navi.FMNaviAnalyser;
+import com.fengmap.android.analysis.navi.FMNaviResult;
 import com.fengmap.android.analysis.search.FMSearchAnalyser;
 import com.fengmap.android.analysis.search.FMSearchResult;
 import com.fengmap.android.analysis.search.model.FMSearchModelByKeywordRequest;
@@ -9,10 +11,13 @@ import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapUpgradeInfo;
 import com.fengmap.android.map.FMViewMode;
 import com.fengmap.android.map.event.OnFMMapInitListener;
+import com.fengmap.android.map.geometry.FMMapCoord;
 import com.fengmap.android.map.layer.FMImageLayer;
 import com.fengmap.android.map.layer.FMLineLayer;
 import com.fengmap.android.map.layer.FMLocationLayer;
+import com.fengmap.android.map.marker.FMLineMarker;
 import com.fengmap.android.map.marker.FMModel;
+import com.fengmap.android.map.marker.FMSegment;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -39,6 +44,8 @@ public class MainPresenter implements MainContract.Presenter {
 
     private FMSearchAnalyser mSearchAnalyser;
 
+    private FMNaviAnalyser mNaviAnalyser;
+
     public MainPresenter(MainContract.View view) {
         mView = view;
     }
@@ -52,6 +59,7 @@ public class MainPresenter implements MainContract.Presenter {
                 //得到搜索分析器
                 try {
                     mSearchAnalyser = FMSearchAnalyser.getFMSearchAnalyserByPath(path);
+                    mNaviAnalyser = FMNaviAnalyser.getFMNaviAnalyserByPath(path);
                 } catch (FileNotFoundException pE) {
                     pE.printStackTrace();
                 } catch (FMObjectException pE) {
@@ -92,6 +100,32 @@ public class MainPresenter implements MainContract.Presenter {
         for (FMSearchResult result : results) {
             String fid = (String) result.get("FID");
             FMModel model = mFMMap.getFMLayerProxy().queryFMModelByFid(fid);
+        }
+    }
+
+    /**
+     * 根据起始点坐标和起始点楼层id，路径分析，并根据结果绘制路径线。
+     *
+     * @param stGroupId  起点层id
+     * @param stCoord    起点坐标
+     * @param endGroupId 终点层id
+     * @param endCoord   终点坐标
+     */
+    void analyzeNavigation(int stGroupId, FMMapCoord stCoord, int endGroupId, FMMapCoord endCoord) {
+        int type = mNaviAnalyser.analyzeNavi(stGroupId, stCoord, endGroupId, endCoord,
+                FMNaviAnalyser.FMNaviModule.MODULE_SHORTEST);
+        if (type == FMNaviAnalyser.FMRouteCalcuResult.ROUTE_SUCCESS) {
+            ArrayList<FMNaviResult> results = mNaviAnalyser.getNaviResults();
+            // 构建线数据
+            ArrayList segments = new ArrayList<>();
+            for (FMNaviResult r : results) {
+                int groupId = r.getGroupId();
+                FMSegment s = new FMSegment(groupId, r.getPointList());
+                segments.add(s);
+            }
+            //添加LineMarker
+            FMLineMarker lineMarker = new FMLineMarker(segments);
+            mLineLayer.addMarker(lineMarker);
         }
     }
 
