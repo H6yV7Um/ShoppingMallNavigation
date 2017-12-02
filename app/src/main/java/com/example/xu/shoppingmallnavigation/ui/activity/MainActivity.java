@@ -16,6 +16,11 @@ import com.example.xu.shoppingmallnavigation.presenter.main.MainPresenter;
 import com.example.xu.shoppingmallnavigation.utils.FileUtils;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapView;
+import com.fengmap.android.map.event.OnFMNodeListener;
+import com.fengmap.android.map.geometry.FMMapCoord;
+import com.fengmap.android.map.layer.FMModelLayer;
+import com.fengmap.android.map.marker.FMModel;
+import com.fengmap.android.map.marker.FMNode;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -34,8 +39,11 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
     SearchView mSearchView;
 
-    FMMap mFMMap;
+    private FMMap mFMMap;
     private MainPresenter presenter;
+    private FMModel mClickedModel;
+    private int mGroupId = 1;
+    private FMModelLayer mModelLayer;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -47,6 +55,19 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
         presenter = new MainPresenter(this);
         openMapByPath();
+
+//        int groupId = mFMMap.getFocusGroupId();
+//
+//        //模型图层
+//        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(groupId);
+//        mModelLayer.setOnFMNodeListener(mOnModelCLickListener);
+
+        //模拟导航需要的起始点坐标和起始点楼层id
+//        int stGroupId = 1;
+//        FMMapCoord stCoord = new FMMapCoord(12961573.57171745, 4861851.492463955);
+//        int endGroupId = 1;
+//        FMMapCoord endCoord = new FMMapCoord(12961699.79823795, 4861826.46384646);
+//        presenter.analyzeNavigation(stGroupId, stCoord, endGroupId, endCoord);
     }
 
     private void initViews() {
@@ -59,10 +80,9 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
      * 加载地图数据
      */
     private void openMapByPath() {
-        mFMMap = mapView.getFMMap();
-        //加载离线数据
+
         String path = FileUtils.getDefaultMapPath(this);
-        presenter.loadMap(mFMMap, path);
+        mFMMap = presenter.loadMap(mapView, path);
     }
 
     /**
@@ -133,5 +153,32 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
         return super.onCreateOptionsMenu(menu);
     }
+
+    /**
+     * 模型点击事件
+     */
+    private OnFMNodeListener mOnModelCLickListener = new OnFMNodeListener() {
+        @Override
+        public boolean onClick(FMNode node) {
+            if(mClickedModel!=null){
+                mClickedModel.setSelected(false);
+            }
+            FMModel model = (FMModel) node;
+            mClickedModel = model;
+
+            model.setSelected(true);
+            mFMMap.updateMap();
+
+            FMMapCoord centerMapCoord = model.getCenterMapCoord();
+            String content = getString(R.string.event_click_content, "模型", mGroupId, centerMapCoord.x, centerMapCoord.y);
+            Toast.makeText(MainActivity.this, content, Toast.LENGTH_LONG).show();
+            return true;
+        }
+
+        @Override
+        public boolean onLongPress(FMNode node) {
+            return false;
+        }
+    };
 
 }

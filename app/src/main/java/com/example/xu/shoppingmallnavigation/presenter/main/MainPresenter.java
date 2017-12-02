@@ -9,6 +9,7 @@ import com.fengmap.android.analysis.search.model.FMSearchModelByKeywordRequest;
 import com.fengmap.android.exception.FMObjectException;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapUpgradeInfo;
+import com.fengmap.android.map.FMMapView;
 import com.fengmap.android.map.FMViewMode;
 import com.fengmap.android.map.event.OnFMMapInitListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 
 public class MainPresenter implements MainContract.Presenter {
 
+    private FMMap fmMap;
+
     private MainContract.View mView;
     /**
      * 线图层
@@ -46,11 +49,13 @@ public class MainPresenter implements MainContract.Presenter {
 
     private FMNaviAnalyser mNaviAnalyser;
 
+
     public MainPresenter(MainContract.View view) {
         mView = view;
     }
 
-    public void loadMap(FMMap fmMap, final String path) {
+    public FMMap loadMap(FMMapView mapView, final String path) {
+        fmMap = mapView.getFMMap();
         mView.showProgress();
         fmMap.setOnFMMapInitListener(new OnFMMapInitListener() {
             @Override
@@ -80,13 +85,14 @@ public class MainPresenter implements MainContract.Presenter {
         fmMap.openMapByPath(path);
         fmMap.setFMViewMode(FMViewMode.FMVIEW_MODE_2D);
 
-        //线图层
+        //添加线图层
         mLineLayer = fmMap.getFMLayerProxy().getFMLineLayer();
         fmMap.addLayer(mLineLayer);
 
         //定位层
         mLocationLayer = fmMap.getFMLayerProxy().getFMLocationLayer();
         fmMap.addLayer(mLocationLayer);
+        return fmMap;
     }
 
     //根据关键字搜索模型
@@ -111,7 +117,7 @@ public class MainPresenter implements MainContract.Presenter {
      * @param endGroupId 终点层id
      * @param endCoord   终点坐标
      */
-    void analyzeNavigation(int stGroupId, FMMapCoord stCoord, int endGroupId, FMMapCoord endCoord) {
+    public void analyzeNavigation(int stGroupId, FMMapCoord stCoord, int endGroupId, FMMapCoord endCoord) {
         int type = mNaviAnalyser.analyzeNavi(stGroupId, stCoord, endGroupId, endCoord,
                 FMNaviAnalyser.FMNaviModule.MODULE_SHORTEST);
         if (type == FMNaviAnalyser.FMRouteCalcuResult.ROUTE_SUCCESS) {
