@@ -20,7 +20,7 @@
         <!--修改搜索框提示文字-->
         <item name="defaultQueryHint">搜索商铺</item>
         <!--修改打开搜索框的搜索按钮的图标-->
-        <item name="searchIcon">@android:drawable/ic_menu_search</item>
+        <item name="searchIcon">@mipmap/search</item>
         <!--修改搜索框左边的搜索按钮图标-->
         <item name="searchHintIcon">@null</item>
     </style>

@@ -13,12 +13,9 @@ import android.widget.Toast;
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.contract.main.MainContract;
 import com.example.xu.shoppingmallnavigation.presenter.main.MainPresenter;
-import com.example.xu.shoppingmallnavigation.utils.FileUtils;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapView;
 import com.fengmap.android.map.event.OnFMNodeListener;
-import com.fengmap.android.map.geometry.FMMapCoord;
-import com.fengmap.android.map.layer.FMModelLayer;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
 
@@ -43,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
     private MainPresenter presenter;
     private FMModel mClickedModel;
     private int mGroupId = 1;
-    private FMModelLayer mModelLayer;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,10 +52,6 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
         presenter = new MainPresenter(this);
         openMapByPath();
 
-//        int groupId = mFMMap.getFocusGroupId();
-//
-//        //模型图层
-//        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(groupId);
 //        mModelLayer.setOnFMNodeListener(mOnModelCLickListener);
 
         //模拟导航需要的起始点坐标和起始点楼层id
@@ -80,9 +72,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
      * 加载地图数据
      */
     private void openMapByPath() {
-
-        String path = FileUtils.getDefaultMapPath(this);
-        mFMMap = presenter.loadMap(mapView, path);
+        mFMMap = presenter.loadMap(this, mapView, MainActivity.this);
     }
 
     /**
@@ -98,17 +88,18 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 
     @Override
     public void showProgress() {
-        Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_LONG);
+        Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_LONG).show();
     }
 
     @Override
     public void hideProgress() {
-        Toast.makeText(MainActivity.this, "complete...", Toast.LENGTH_LONG);
+        Toast.makeText(MainActivity.this, "complete...", Toast.LENGTH_LONG).show();
+//        presenter.setOnMapClickListener(mOnModelCLickListener);
     }
 
     @Override
     public void showFailMsg(String msg) {
-        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG);
+        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -133,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
-                presenter.searchModelByKeyword(mFMMap, s);
+//                presenter.searchModelByKeyword(s);
                 return false;
             }
 
@@ -160,18 +151,18 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
     private OnFMNodeListener mOnModelCLickListener = new OnFMNodeListener() {
         @Override
         public boolean onClick(FMNode node) {
-            if(mClickedModel!=null){
-                mClickedModel.setSelected(false);
-            }
-            FMModel model = (FMModel) node;
-            mClickedModel = model;
-
-            model.setSelected(true);
-            mFMMap.updateMap();
-
-            FMMapCoord centerMapCoord = model.getCenterMapCoord();
-            String content = getString(R.string.event_click_content, "模型", mGroupId, centerMapCoord.x, centerMapCoord.y);
-            Toast.makeText(MainActivity.this, content, Toast.LENGTH_LONG).show();
+//            if (mClickedModel != null) {
+//                mClickedModel.setSelected(false);
+//            }
+//            FMModel model = (FMModel) node;
+//            mClickedModel = model;
+//
+//            model.setSelected(true);
+//            mFMMap.updateMap();
+//
+//            FMMapCoord centerMapCoord = model.getCenterMapCoord();
+//            String content = getString(R.string.event_click_content, "模型", mGroupId, centerMapCoord.x, centerMapCoord.y);
+            Toast.makeText(MainActivity.this, "clicked", Toast.LENGTH_LONG).show();
             return true;
         }
 
