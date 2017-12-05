@@ -12,7 +12,6 @@ import com.fengmap.android.exception.FMObjectException;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapUpgradeInfo;
 import com.fengmap.android.map.FMMapView;
-import com.fengmap.android.map.FMViewMode;
 import com.fengmap.android.map.event.OnFMMapInitListener;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.layer.FMLineLayer;
@@ -37,6 +36,8 @@ public class MapHelper {
 
     private FMModelLayer mModelLayer;
 
+    private int groupId;
+
     /**
      * 定位图层
      */
@@ -47,7 +48,7 @@ public class MapHelper {
      */
     protected FMLineLayer mLineLayer;
 
-    public FMMap loadMap(final BaseView baseView, FMMapView mapView, Context context) {
+    public FMMap loadMap(final BaseView baseView, FMMapView mapView, final Context context) {
         //加载离线数据
         baseView.showProgress();
         final String path = FileUtils.getDefaultMapPath(context);
@@ -57,7 +58,11 @@ public class MapHelper {
             public void onMapInitSuccess(String s) {
                 try {
                     mSearchAnalyser = FMSearchAnalyser.getFMSearchAnalyserByPath(path);
-                    mNaviAnalyser = FMNaviAnalyser.getFMNaviAnalyserByPath(path);
+//                    mNaviAnalyser = FMNaviAnalyser.getFMNaviAnalyserByPath(path);
+                    fmMap.loadThemeByPath(FileUtils.getDefaultThemePath(context));
+                    groupId = fmMap.getFocusGroupId();
+                    mModelLayer = fmMap.getFMLayerProxy().getFMModelLayer(groupId);
+                    fmMap.addLayer(mModelLayer);
                     baseView.showFailMsg("initSuccess");
                 } catch (FileNotFoundException pE) {
                     pE.printStackTrace();
@@ -80,20 +85,16 @@ public class MapHelper {
             }
         });
         fmMap.openMapByPath(path);
-        fmMap.setFMViewMode(FMViewMode.FMVIEW_MODE_2D);
+//        fmMap.setFMViewMode(FMViewMode.FMVIEW_MODE_2D);
 
-        //添加线图层
-        mLineLayer = fmMap.getFMLayerProxy().getFMLineLayer();
-        fmMap.addLayer(mLineLayer);
+//        //添加线图层
+//        mLineLayer = fmMap.getFMLayerProxy().getFMLineLayer();
+//        fmMap.addLayer(mLineLayer);
+//
+//        //定位层
+//        mLocationLayer = fmMap.getFMLayerProxy().getFMLocationLayer();
+//        fmMap.addLayer(mLocationLayer);
 
-        //定位层
-        mLocationLayer = fmMap.getFMLayerProxy().getFMLocationLayer();
-        fmMap.addLayer(mLocationLayer);
-
-        int groupId = fmMap.getFocusGroupId();
-
-        //模型图层
-        mModelLayer = fmMap.getFMLayerProxy().getFMModelLayer(groupId);
         baseView.hideProgress();
         return fmMap;
     }
@@ -111,8 +112,21 @@ public class MapHelper {
         }
     }
 
-    public void setOnMapClickListener(OnFMNodeListener mOnModelCLickListener) {
-        mModelLayer.setOnFMNodeListener(mOnModelCLickListener);
+//    public void setOnMapClickListener(OnFMMapClickListener mOnFMMapClickListener) {
+//        if (mModelLayer != null) {
+//            fmMap.setOnFMMapClickListener(mOnFMMapClickListener);
+//        }
+//    }
+
+    public void setOnFMNodeListener(OnFMNodeListener mOnFMNodeListener) {
+//        Log.i("shoppingmall", "result:" + groupId);
+//        //模型图层
+
+//        Log.i("shoppingmall", "result:" + (mModelLayer != null));
+        if (mModelLayer != null) {
+            mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
+
+        }
     }
 
 

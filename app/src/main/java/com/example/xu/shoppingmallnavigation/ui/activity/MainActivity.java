@@ -3,7 +3,6 @@ package com.example.xu.shoppingmallnavigation.ui.activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -11,10 +10,9 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
+import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
 import com.example.xu.shoppingmallnavigation.base.contract.main.MainContract;
 import com.example.xu.shoppingmallnavigation.presenter.main.MainPresenter;
-import com.fengmap.android.map.FMMap;
-import com.fengmap.android.map.FMMapView;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
@@ -26,17 +24,13 @@ import butterknife.ButterKnife;
  * Created by Xu on 2017/11/26.
  */
 
-public class MainActivity extends AppCompatActivity implements MainContract.View {
-
-    @BindView(R.id.mapview)
-    FMMapView mapView;
+public class MainActivity extends BaseMapActivity implements MainContract.View {
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
 
     SearchView mSearchView;
-
-    private FMMap mFMMap;
+    
     private MainPresenter presenter;
     private FMModel mClickedModel;
     private int mGroupId = 1;
@@ -44,15 +38,10 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
-        initViews();
-
-        presenter = new MainPresenter(this);
-        openMapByPath();
-
-//        mModelLayer.setOnFMNodeListener(mOnModelCLickListener);
+//
+//
+//        presenter = new MainPresenter(this);
 
         //模拟导航需要的起始点坐标和起始点楼层id
 //        int stGroupId = 1;
@@ -62,28 +51,20 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
 //        presenter.analyzeNavigation(stGroupId, stCoord, endGroupId, endCoord);
     }
 
-    private void initViews() {
+    public void initViews() {
         // 设置ActionBar
         setSupportActionBar(toolbar);
 //        toolbar.setOnMenuItemClickListener(onMenuItemClick);
     }
 
-    /**
-     * 加载地图数据
-     */
-    private void openMapByPath() {
-        mFMMap = presenter.loadMap(this, mapView, MainActivity.this);
+    @Override
+    public int getLayoutId() {
+        return R.layout.activity_main;
     }
 
-    /**
-     * 地图销毁调用
-     */
     @Override
-    public void onBackPressed() {
-        if (mFMMap != null) {
-            mFMMap.onDestroy();
-        }
-        super.onBackPressed();
+    public int getMapViewId() {
+        return R.id.mapview;
     }
 
     @Override
@@ -94,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
     @Override
     public void hideProgress() {
         Toast.makeText(MainActivity.this, "complete...", Toast.LENGTH_LONG).show();
-//        presenter.setOnMapClickListener(mOnModelCLickListener);
+        presenter.setOnFMNodeListener(mOnFMNodeListener);
     }
 
     @Override
@@ -148,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
     /**
      * 模型点击事件
      */
-    private OnFMNodeListener mOnModelCLickListener = new OnFMNodeListener() {
+    private OnFMNodeListener mOnFMNodeListener = new OnFMNodeListener() {
         @Override
         public boolean onClick(FMNode node) {
 //            if (mClickedModel != null) {
@@ -171,5 +152,22 @@ public class MainActivity extends AppCompatActivity implements MainContract.View
             return false;
         }
     };
+
+//    private OnFMMapClickListener listener = new OnFMMapClickListener() {
+//        @Override
+//        public void onMapClick(float x, float y) {
+//            FMPickMapCoordResult mapCoordResult = mFMMap.pickMapCoord(x, y);
+//            double pX = x;
+//            double pY = y;
+//            if (mapCoordResult != null) {
+//                FMMapCoord mapCoord = mapCoordResult.getMapCoord();
+//                pX = mapCoord.x;
+//                pY = mapCoord.y;
+//            }
+//            Log.i("shoppingmall", "map clicked");
+//            String content = getString(R.string.event_click_content, "地图", mGroupId, pX, pY);
+//            Toast.makeText(MainActivity.this, content, Toast.LENGTH_LONG).show();
+//        }
+//    };
 
 }
