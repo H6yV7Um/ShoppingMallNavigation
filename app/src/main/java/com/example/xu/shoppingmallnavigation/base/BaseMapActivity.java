@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
 import com.example.xu.shoppingmallnavigation.utils.FileUtils;
+import com.fengmap.android.FMErrorMsg;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapUpgradeInfo;
 import com.fengmap.android.map.FMMapView;
@@ -44,13 +45,13 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     public void onMapInitSuccess(String path) {
         //加载离线主题文件
         mFMMap.loadThemeByPath(FileUtils.getDefaultThemePath(this));
-        hideProgress();
+
     }
 
     @Override
     public void onMapInitFailure(String path, int errorCode) {
         //TODO 可以提示用户地图加载失败原因，进行地图加载失败处理
-        showFailMsg(path);
+        showFailMsg(path + FMErrorMsg.getErrorMsg(errorCode));
     }
 
     @Override

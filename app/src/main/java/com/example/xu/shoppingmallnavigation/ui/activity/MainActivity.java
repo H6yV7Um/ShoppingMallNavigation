@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -12,8 +13,10 @@ import android.widget.Toast;
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
 import com.example.xu.shoppingmallnavigation.base.contract.main.MainContract;
-import com.example.xu.shoppingmallnavigation.presenter.main.MainPresenter;
+import com.fengmap.android.map.event.OnFMMapClickListener;
 import com.fengmap.android.map.event.OnFMNodeListener;
+import com.fengmap.android.map.geometry.FMMapCoord;
+import com.fengmap.android.map.layer.FMModelLayer;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
 
@@ -24,25 +27,24 @@ import butterknife.ButterKnife;
  * Created by Xu on 2017/11/26.
  */
 
-public class MainActivity extends BaseMapActivity implements MainContract.View {
+public class MainActivity extends BaseMapActivity implements MainContract.View, OnFMMapClickListener {
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
 
     SearchView mSearchView;
-    
-    private MainPresenter presenter;
-    private FMModel mClickedModel;
+
+    private FMModelLayer mModelLayer;
     private int mGroupId = 1;
+    private FMModel mClickedModel;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ButterKnife.bind(this);
-//
-//
 //        presenter = new MainPresenter(this);
-
+        //地图点击事件
+        mFMMap.setOnFMMapClickListener(this);
         //模拟导航需要的起始点坐标和起始点楼层id
 //        int stGroupId = 1;
 //        FMMapCoord stCoord = new FMMapCoord(12961573.57171745, 4861851.492463955);
@@ -58,6 +60,23 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     }
 
     @Override
+    public void onMapInitSuccess(String path) {
+        super.onMapInitSuccess(path);
+
+        int groupId = mFMMap.getFocusGroupId();
+        //公共设施图层
+//        mFacilityLayer = mFMMap.getFMLayerProxy().getFMFacilityLayer(groupId);
+//        mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
+//        mFMMap.addLayer(mFacilityLayer);
+
+        //模型图层
+        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(groupId);
+        mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
+        mFMMap.addLayer(mModelLayer);
+        hideProgress();
+    }
+
+    @Override
     public int getLayoutId() {
         return R.layout.activity_main;
     }
@@ -69,18 +88,21 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
 
     @Override
     public void showProgress() {
-        Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_LONG).show();
+//        Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_LONG).show();
+        Log.i("shopping", "loading...");
     }
 
     @Override
     public void hideProgress() {
-        Toast.makeText(MainActivity.this, "complete...", Toast.LENGTH_LONG).show();
-        presenter.setOnFMNodeListener(mOnFMNodeListener);
+//        Toast.makeText(MainActivity.this, "complete...", Toast.LENGTH_LONG).show();
+//        presenter.setOnFMNodeListener(mOnFMNodeListener);
+        Log.i("shopping", "complete...");
     }
 
     @Override
     public void showFailMsg(String msg) {
         Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+        Log.i("shopping", msg);
     }
 
     @Override
@@ -132,18 +154,19 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     private OnFMNodeListener mOnFMNodeListener = new OnFMNodeListener() {
         @Override
         public boolean onClick(FMNode node) {
-//            if (mClickedModel != null) {
-//                mClickedModel.setSelected(false);
-//            }
-//            FMModel model = (FMModel) node;
-//            mClickedModel = model;
-//
-//            model.setSelected(true);
-//            mFMMap.updateMap();
-//
-//            FMMapCoord centerMapCoord = model.getCenterMapCoord();
-//            String content = getString(R.string.event_click_content, "模型", mGroupId, centerMapCoord.x, centerMapCoord.y);
-            Toast.makeText(MainActivity.this, "clicked", Toast.LENGTH_LONG).show();
+            if (mClickedModel != null) {
+                mClickedModel.setSelected(false);
+            }
+            FMModel model = (FMModel) node;
+            mClickedModel = model;
+
+            model.setSelected(true);
+            mFMMap.updateMap();
+
+            FMMapCoord centerMapCoord = model.getCenterMapCoord();
+
+            String content = getString(R.string.event_click_content, "模型", mGroupId, centerMapCoord.x, centerMapCoord.y);
+            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
             return true;
         }
 
@@ -153,21 +176,19 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
         }
     };
 
-//    private OnFMMapClickListener listener = new OnFMMapClickListener() {
-//        @Override
-//        public void onMapClick(float x, float y) {
-//            FMPickMapCoordResult mapCoordResult = mFMMap.pickMapCoord(x, y);
-//            double pX = x;
-//            double pY = y;
-//            if (mapCoordResult != null) {
-//                FMMapCoord mapCoord = mapCoordResult.getMapCoord();
-//                pX = mapCoord.x;
-//                pY = mapCoord.y;
-//            }
-//            Log.i("shoppingmall", "map clicked");
-//            String content = getString(R.string.event_click_content, "地图", mGroupId, pX, pY);
-//            Toast.makeText(MainActivity.this, content, Toast.LENGTH_LONG).show();
+    @Override
+    public void onMapClick(float x, float y) {
+//        FMPickMapCoordResult mapCoordResult = mFMMap.pickMapCoord(x, y);
+//        double pX = x;
+//        double pY = y;
+//        if (mapCoordResult != null) {
+//            FMMapCoord mapCoord = mapCoordResult.getMapCoord();
+//            pX = mapCoord.x;
+//            pY = mapCoord.y;
 //        }
-//    };
+//
+//        String content = getString(R.string.event_click_content, "地图", mGroupId, pX, pY);
+//        Toast.makeText(MainActivity.this, content, Toast.LENGTH_LONG).show();
+    }
 
 }
