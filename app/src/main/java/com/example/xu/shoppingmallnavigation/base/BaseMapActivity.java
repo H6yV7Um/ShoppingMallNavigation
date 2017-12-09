@@ -1,8 +1,14 @@
 package com.example.xu.shoppingmallnavigation.base;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.utils.FileUtils;
 import com.fengmap.android.FMErrorMsg;
@@ -20,12 +26,31 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     protected FMMapView mMapView;
     protected FMMap mFMMap;
 
+    private static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         super.setContentView(getLayoutId());
         initViews();
-        openMapByPath();
+        requestPermission();
+    }
+
+    private void requestPermission() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            } else {
+                openMapByPath();
+            }
+        } else {
+            openMapByPath();
+        }
     }
 
     /**
@@ -82,5 +107,20 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     public abstract void hideProgress();
 
     public abstract void showFailMsg(String msg);
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+
+        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openMapByPath();
+            } else {
+                // Permission Denied
+                Toast.makeText(BaseMapActivity.this, "Permission Denied", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
 
 }

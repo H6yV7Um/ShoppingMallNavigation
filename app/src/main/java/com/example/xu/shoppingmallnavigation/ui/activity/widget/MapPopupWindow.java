@@ -25,11 +25,13 @@ public class MapPopupWindow extends PopupWindow {
     private TextView tvDistance;
     private Button btNavi;
 
-    public MapPopupWindow(Context context, View.OnClickListener itemOnClick) {
+    public MapPopupWindow(Context context, View.OnClickListener itemOnClick, String name, String distance) {
         super(context);
         parentView = LayoutInflater.from(context).inflate(R.layout.map_popup_window_layout, null);
         initViews(parentView);
         initEvents(itemOnClick);
+        tvName.setText(name);
+        tvDistance.setText(distance);
         this.setContentView(parentView);
         this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
         this.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -64,14 +66,15 @@ public class MapPopupWindow extends PopupWindow {
 
     private void initEvents(View.OnClickListener itemOnClick) {
         btNavi.setOnClickListener(itemOnClick);
+
     }
 
     public void setLocationName(String name) {
-        tvName.setText(name);
+
     }
 
     public void setLocationDistance(String distance) {
-        tvName.setText(distance);
+
     }
 
     public void setBackgroundAlpha(Activity activity, float bgAlpha) {
@@ -83,14 +86,13 @@ public class MapPopupWindow extends PopupWindow {
 
     public void dismissPopupWindow(Activity activity) {
         super.dismiss();
-        setBackgroundAlpha(activity, 1.0f);
     }
 
     public void dismissOutSide(final Activity activity) {
         setOnDismissListener(new OnDismissListener() {
             @Override
             public void onDismiss() {
-                setBackgroundAlpha(activity, 1.0f);
+
             }
         });
     }

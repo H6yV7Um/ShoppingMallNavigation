@@ -10,7 +10,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
@@ -33,6 +33,9 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     @BindView(R.id.toolbar)
     Toolbar toolbar;
 
+    @BindView(R.id.mapview_error)
+    TextView tvError;
+
     SearchView mSearchView;
 
     private FMModelLayer mModelLayer;
@@ -45,12 +48,12 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ButterKnife.bind(this);
+
     }
 
     public void initViews() {
         // 设置ActionBar
         setSupportActionBar(toolbar);
-//        toolbar.setOnMenuItemClickListener(onMenuItemClick);
     }
 
     @Override
@@ -95,14 +98,16 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
 
     @Override
     public void showFailMsg(String msg) {
-        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+//        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+        Log.i("shopping", msg);
+        tvError.setVisibility(View.VISIBLE);
+        mMapView.setVisibility(View.GONE);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search, menu);
         MenuItem searchItem = menu.findItem(R.id.action_search);
-
         //通过MenuItem得到SearchView
         mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         //设置是否显示搜索框展开时的提交按钮
@@ -138,7 +143,7 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
             }
         });
 
-        return super.onCreateOptionsMenu(menu);
+        return true;
     }
 
     /**
@@ -188,15 +193,14 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
 
     private void createPopupWindow(String name, String distance) {
         if (popupWindow != null) {
-            popupWindow.setLocationName(name);
-            popupWindow.setLocationDistance(distance);
-        } else {
-            popupWindow = new MapPopupWindow(MainActivity.this, listener);
-            popupWindow.setBackgroundAlpha(MainActivity.this, 0.5f);
-            popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
-                    Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
-            popupWindow.dismissOutSide(MainActivity.this);
+            popupWindow.dismiss();
+            popupWindow = null;
         }
+        popupWindow = new MapPopupWindow(MainActivity.this, listener, name, distance);
+        popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+        popupWindow.dismissOutSide(MainActivity.this);
+
     }
 
 }
