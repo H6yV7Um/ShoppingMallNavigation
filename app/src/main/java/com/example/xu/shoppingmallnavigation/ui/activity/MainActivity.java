@@ -14,7 +14,6 @@ import android.widget.TextView;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
-import com.example.xu.shoppingmallnavigation.base.contract.main.MainContract;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.layer.FMModelLayer;
@@ -28,7 +27,7 @@ import butterknife.ButterKnife;
  * Created by Xu on 2017/11/26.
  */
 
-public class MainActivity extends BaseMapActivity implements MainContract.View {
+public class MainActivity extends BaseMapActivity {
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -39,7 +38,6 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     SearchView mSearchView;
 
     private FMModelLayer mModelLayer;
-    private int mGroupId = 1;
     private FMModel mClickedModel;
 
     private MapPopupWindow popupWindow;
@@ -48,12 +46,12 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ButterKnife.bind(this);
-
+        // 设置ActionBar
+        setSupportActionBar(toolbar);
     }
 
     public void initViews() {
-        // 设置ActionBar
-        setSupportActionBar(toolbar);
+
     }
 
     @Override
