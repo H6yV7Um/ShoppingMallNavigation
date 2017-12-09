@@ -6,14 +6,16 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.PopupWindow;
+import android.view.View;
 import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
 import com.example.xu.shoppingmallnavigation.base.contract.main.MainContract;
+import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.layer.FMModelLayer;
 import com.fengmap.android.map.marker.FMModel;
@@ -37,21 +39,12 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     private int mGroupId = 1;
     private FMModel mClickedModel;
 
-    private PopupWindow popupWindow;
+    private MapPopupWindow popupWindow;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ButterKnife.bind(this);
-//        presenter = new MainPresenter(this);
-        //地图点击事件
-//        mFMMap.setOnFMMapClickListener(this);
-        //模拟导航需要的起始点坐标和起始点楼层id
-//        int stGroupId = 1;
-//        FMMapCoord stCoord = new FMMapCoord(12961573.57171745, 4861851.492463955);
-//        int endGroupId = 1;
-//        FMMapCoord endCoord = new FMMapCoord(12961699.79823795, 4861826.46384646);
-//        presenter.analyzeNavigation(stGroupId, stCoord, endGroupId, endCoord);
     }
 
     public void initViews() {
@@ -103,7 +96,6 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
     @Override
     public void showFailMsg(String msg) {
         Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
-        Log.i("shopping", msg);
     }
 
     @Override
@@ -168,8 +160,8 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
 //
 //            String content = getString(R.string.event_click_content, "模型", mGroupId, centerMapCoord.x, centerMapCoord.y);
             //TODO 弹窗！！！
-
-            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
+            createPopupWindow(model.getName(), "");
+//            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
             return true;
         }
 
@@ -179,5 +171,32 @@ public class MainActivity extends BaseMapActivity implements MainContract.View {
         }
     };
 
+    //为弹出窗口实现监听类
+    private View.OnClickListener listener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // 隐藏弹出窗口
+            popupWindow.dismissOutSide(MainActivity.this);
+            switch (v.getId()) {
+                case R.id.map_navi_bt:
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
+    private void createPopupWindow(String name, String distance) {
+        if (popupWindow != null) {
+            popupWindow.setLocationName(name);
+            popupWindow.setLocationDistance(distance);
+        } else {
+            popupWindow = new MapPopupWindow(MainActivity.this, listener);
+            popupWindow.setBackgroundAlpha(MainActivity.this, 0.5f);
+            popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
+                    Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+            popupWindow.dismissOutSide(MainActivity.this);
+        }
+    }
 
 }

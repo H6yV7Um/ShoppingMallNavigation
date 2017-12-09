@@ -7,8 +7,6 @@ import com.example.xu.shoppingmallnavigation.base.BaseView;
 import com.example.xu.shoppingmallnavigation.base.contract.main.MainContract;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapView;
-import com.fengmap.android.map.event.OnFMMapClickListener;
-import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.layer.FMImageLayer;
 
 /**
@@ -71,14 +69,6 @@ public class MainPresenter implements MainContract.Presenter {
     //根据关键字搜索模型
     public void searchModelByKeyword(String keyword) {
         mapHelper.searchModelByKeyword(keyword);
-    }
-
-    public void setOnFMNodeListener(OnFMNodeListener mOnFMNodeListener) {
-        mapHelper.setOnFMNodeListener(mOnFMNodeListener);
-    }
-
-    public void setOnMapClickListener(OnFMMapClickListener mOnFMMapClickListener) {
-//        mapHelper.setOnMapClickListener(mOnFMMapClickListener);
     }
 
     /**

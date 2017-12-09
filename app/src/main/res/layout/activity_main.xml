@@ -2,28 +2,28 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map_main_ll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context="com.example.xu.shoppingmallnavigation.ui.activity.MainActivity">
 
-    <android.support.v7.widget.Toolbar
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <android.support.v7.widget.Toolbar xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
         app:title="商城导航"
-        app:titleTextColor="@android:color/white"
-        android:background="@color/colorPrimary">
+        app:titleTextColor="@android:color/white">
 
     </android.support.v7.widget.Toolbar>
 
 
     <com.fengmap.android.map.FMMapView
+        android:id="@+id/mapview"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="10"
-        android:id="@+id/mapview" />
+        android:layout_weight="10" />
 
 
 </LinearLayout>

@@ -13,7 +13,6 @@ import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapUpgradeInfo;
 import com.fengmap.android.map.FMMapView;
 import com.fengmap.android.map.event.OnFMMapInitListener;
-import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.layer.FMLineLayer;
 import com.fengmap.android.map.layer.FMLocationLayer;
 import com.fengmap.android.map.layer.FMModelLayer;
@@ -109,23 +108,6 @@ public class MapHelper {
         for (FMSearchResult result : results) {
             String fid = (String) result.get("FID");
             FMModel model = fmMap.getFMLayerProxy().queryFMModelByFid(fid);
-        }
-    }
-
-//    public void setOnMapClickListener(OnFMMapClickListener mOnFMMapClickListener) {
-//        if (mModelLayer != null) {
-//            fmMap.setOnFMMapClickListener(mOnFMMapClickListener);
-//        }
-//    }
-
-    public void setOnFMNodeListener(OnFMNodeListener mOnFMNodeListener) {
-//        Log.i("shoppingmall", "result:" + groupId);
-//        //模型图层
-
-//        Log.i("shoppingmall", "result:" + (mModelLayer != null));
-        if (mModelLayer != null) {
-            mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
-
         }
     }
 
