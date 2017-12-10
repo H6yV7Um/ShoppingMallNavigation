@@ -96,4 +96,8 @@ public class MapPopupWindow extends PopupWindow {
             }
         });
     }
+
+    public void dismissOutSide(final Activity activity, OnDismissListener listener) {
+        setOnDismissListener(listener);
+    }
 }

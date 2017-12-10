@@ -10,15 +10,27 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
+import com.example.xu.shoppingmallnavigation.ui.activity.adapter.MapSearchAdapter;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
+import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
+import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
 import com.fengmap.android.map.event.OnFMNodeListener;
+import com.fengmap.android.map.geometry.FMMapCoord;
+import com.fengmap.android.map.layer.FMFacilityLayer;
+import com.fengmap.android.map.layer.FMImageLayer;
 import com.fengmap.android.map.layer.FMModelLayer;
+import com.fengmap.android.map.marker.FMFacility;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
+
+import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -35,11 +47,9 @@ public class MainActivity extends BaseMapActivity {
     @BindView(R.id.mapview_error)
     TextView tvError;
 
-    SearchView mSearchView;
-
-    private FMModelLayer mModelLayer;
-    private FMModel mClickedModel;
-
+    private SearchView mSearchView;
+    private MapSearchAdapter mapSearchAdapter;
+    private SearchView.SearchAutoComplete mSearchAutoComplete;
     private MapPopupWindow popupWindow;
 
     @Override
@@ -57,17 +67,8 @@ public class MainActivity extends BaseMapActivity {
     @Override
     public void onMapInitSuccess(String path) {
         super.onMapInitSuccess(path);
-
-        int groupId = mFMMap.getFocusGroupId();
-        //公共设施图层
-//        mFacilityLayer = mFMMap.getFMLayerProxy().getFMFacilityLayer(groupId);
-//        mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
-//        mFMMap.addLayer(mFacilityLayer);
-
-        //模型图层
-        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(groupId);
+        mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
         mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
-        mFMMap.addLayer(mModelLayer);
         hideProgress();
     }
 
@@ -110,37 +111,50 @@ public class MainActivity extends BaseMapActivity {
         mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         //设置是否显示搜索框展开时的提交按钮
         mSearchView.setSubmitButtonEnabled(true);
-        SearchView.SearchAutoComplete mSearchAutoComplete = mSearchView.findViewById(R.id.search_src_text);
-
+        mSearchAutoComplete = mSearchView.findViewById(R.id.search_src_text);
         //设置输入框提示文字样式
         mSearchAutoComplete.setHintTextColor(getResources().getColor(android.R.color.darker_gray));
         mSearchAutoComplete.setTextColor(getResources().getColor(android.R.color.background_light));
-
-        //设置搜索栏适配器
-//        mSearchView.setSuggestionsAdapter();
-
+        mSearchAutoComplete.setThreshold(1);
+        mSearchAutoComplete.setOnItemClickListener(searchItemClickListener);
         // 监听器
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
 //                presenter.searchModelByKeyword(s);
+                Log.i("shopping", s);
+                if (!s.equals("")) {
+                    ArrayList<FMModel> models = queryModelByKeyword(s);
+                    if (mapSearchAdapter == null) {
+                        mapSearchAdapter = new MapSearchAdapter(MainActivity.this, models);
+                        mSearchAutoComplete.setAdapter(mapSearchAdapter);
+                    } else {
+                        mapSearchAdapter.setDatas(models);
+                        mapSearchAdapter.notifyDataSetChanged();
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "请输入搜索词！", Toast.LENGTH_LONG).show();
+                }
+                mapSearchAdapter = null;
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String s) {
-//                Cursor cursor = TextUtils.isEmpty(s) ? null : queryData(s);
-//                // 不要频繁创建适配器，如果适配器已经存在，则只需要更新适配器中的cursor对象即可。
-//                if (mSearchView.getSuggestionsAdapter() == null) {
-//                    mSearchView.setSuggestionsAdapter(new SimpleCursorAdapter(SearchViewActivity2.this, R.layout.item_layout, cursor, new String[]{"name"}, new int[]{R.id.text1}));
-//                } else {
-//                    mSearchView.getSuggestionsAdapter().changeCursor(cursor);
-//                }
-//
+                Log.i("shopping-change", s);
+                if (!s.equals("")) {
+                    ArrayList<FMModel> models = queryModelByKeyword(s);
+                    if (mapSearchAdapter == null) {
+                        mapSearchAdapter = new MapSearchAdapter(MainActivity.this, models);
+                        mSearchAutoComplete.setAdapter(mapSearchAdapter);
+                    } else {
+                        mapSearchAdapter.setDatas(models);
+                        mapSearchAdapter.notifyDataSetChanged();
+                    }
+                }
                 return false;
             }
         });
-
         return true;
     }
 
@@ -161,10 +175,33 @@ public class MainActivity extends BaseMapActivity {
 
 //            FMMapCoord centerMapCoord = model.getCenterMapCoord();
 //
-//            String content = getString(R.string.event_click_content, "模型", mGroupId, centerMapCoord.x, centerMapCoord.y);
-            //TODO 弹窗！！！
-            createPopupWindow(model.getName(), "");
+            createPopupWindow(mClickedModel.getName(), "");
 //            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
+            return true;
+        }
+
+        @Override
+        public boolean onLongPress(FMNode node) {
+            return false;
+        }
+    };
+
+    /**
+     * 公共设施点击事件
+     */
+    private OnFMNodeListener mOnFacilityClickListener = new OnFMNodeListener() {
+        @Override
+        public boolean onClick(FMNode node) {
+            if (mClickedFacility != null) {
+                mClickedFacility.setSelected(false);
+            }
+            FMFacility facility = (FMFacility) node;
+            mClickedFacility = facility;
+            facility.setSelected(true);
+            mFMMap.updateMap();
+//            FMMapCoord centerMapCoord = facility.getPosition();
+
+            createPopupWindow(facility.getName(), "");
             return true;
         }
 
@@ -197,8 +234,75 @@ public class MainActivity extends BaseMapActivity {
         popupWindow = new MapPopupWindow(MainActivity.this, listener, name, distance);
         popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
-        popupWindow.dismissOutSide(MainActivity.this);
-
+        popupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                clearFocus(mClickedModel);
+                popupWindow.dismiss();
+                popupWindow = null;
+            }
+        });
     }
+
+    private AdapterView.OnItemClickListener searchItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+            //关闭软键盘
+            KeyBoardUtils.closeKeybord(mSearchAutoComplete, MainActivity.this);
+
+            final FMModel model = (FMModel) adapterView.getItemAtPosition(position);
+            mClickedModel = model;
+            model.setSelected(true);
+            mFMMap.updateMap();
+
+            //切换楼层
+            int groupId = model.getGroupId();
+            if (groupId != mFMMap.getFocusGroupId()) {
+                mFMMap.setFocusByGroupId(groupId, null);
+            }
+
+            //移动至中心点
+            FMMapCoord mapCoord = model.getCenterMapCoord();
+            mFMMap.moveToCenter(mapCoord, false);
+
+//            clearImageMarker();
+
+            createPopupWindow(model.getName(), "");
+
+            //添加图片
+//            FMImageMarker imageMarker = MapSearchUtils.buildImageMarker(getResources(), mapCoord);
+//            mImageLayers.get(model.getGroupId()).addMarker(imageMarker);
+
+        }
+    };
+
+    /**
+     * 通过关键字查询模型
+     *
+     * @param keyword 关键字
+     */
+    private ArrayList<FMModel> queryModelByKeyword(String keyword) {
+        //查询楼层集合
+        int[] groupIds = {mFMMap.getFocusGroupId()};
+        //搜索请求
+        return MapSearchUtils.queryModelByKeyword(mFMMap, groupIds, mSearchAnalyser, keyword);
+    }
+
+    /**
+     * 清除模型的聚焦效果
+     *
+     * @param model 模型
+     */
+    private void clearFocus(FMModel model) {
+        if (!model.equals(mLastClicked)) {
+            if (mLastClicked != null) {
+                mLastClicked.setSelected(false);
+            }
+            this.mLastClicked = model;
+            this.mLastClicked.setSelected(true);
+        }
+        mFMMap.updateMap();
+    }
+
 
 }

@@ -12,10 +12,20 @@ import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.utils.FileUtils;
 import com.fengmap.android.FMErrorMsg;
+import com.fengmap.android.analysis.search.FMSearchAnalyser;
+import com.fengmap.android.exception.FMObjectException;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapUpgradeInfo;
 import com.fengmap.android.map.FMMapView;
 import com.fengmap.android.map.event.OnFMMapInitListener;
+import com.fengmap.android.map.layer.FMFacilityLayer;
+import com.fengmap.android.map.layer.FMImageLayer;
+import com.fengmap.android.map.layer.FMModelLayer;
+import com.fengmap.android.map.marker.FMFacility;
+import com.fengmap.android.map.marker.FMModel;
+
+import java.io.FileNotFoundException;
+import java.util.HashMap;
 
 /**
  * Created by Xu on 2017/12/5.
@@ -25,6 +35,13 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
 
     protected FMMapView mMapView;
     protected FMMap mFMMap;
+    protected FMSearchAnalyser mSearchAnalyser;
+    protected FMModelLayer mModelLayer;
+    protected FMFacilityLayer mFacilityLayer;
+    protected FMModel mClickedModel;
+    protected FMFacility mClickedFacility;
+    protected FMModel mLastClicked;
+    protected HashMap<Integer, FMImageLayer> mImageLayers = new HashMap<>();
 
     private static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
@@ -71,6 +88,35 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         //加载离线主题文件
         mFMMap.loadThemeByPath(FileUtils.getDefaultThemePath(this));
 
+        int groupId = mFMMap.getFocusGroupId();
+        //公共设施图层
+        mFacilityLayer = mFMMap.getFMLayerProxy().getFMFacilityLayer(groupId);
+
+        mFMMap.addLayer(mFacilityLayer);
+
+        //图片图层
+        int groupSize = mFMMap.getFMMapInfo().getGroupSize();
+        for (int i = 0; i < groupSize; i++) {
+            int tempId = mFMMap.getMapGroupIds()[i];
+            FMImageLayer imageLayer = mFMMap.getFMLayerProxy().createFMImageLayer(tempId);
+            mFMMap.addLayer(imageLayer);
+
+            mImageLayers.put(groupId, imageLayer);
+        }
+
+        //模型图层
+        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(groupId);
+
+        mFMMap.addLayer(mModelLayer);
+
+        //搜索分析
+        try {
+            mSearchAnalyser = FMSearchAnalyser.getFMSearchAnalyserById(FileUtils.DEFAULT_MAP_ID);
+        } catch (FMObjectException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -83,6 +129,15 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     public boolean onUpgrade(FMMapUpgradeInfo upgradeInfo) {
         //TODO 获取到最新地图更新的信息，可以进行地图的下载操作
         return false;
+    }
+
+    /**
+     * 清除图片标志
+     */
+    protected void clearImageMarker() {
+        for (FMImageLayer imageLayer : mImageLayers.values()) {
+            imageLayer.removeAll();
+        }
     }
 
     /**
