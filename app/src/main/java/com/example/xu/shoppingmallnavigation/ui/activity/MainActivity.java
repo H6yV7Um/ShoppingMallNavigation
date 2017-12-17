@@ -17,15 +17,13 @@ import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
+import com.example.xu.shoppingmallnavigation.helper.ViewHelper;
 import com.example.xu.shoppingmallnavigation.ui.activity.adapter.MapSearchAdapter;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
-import com.fengmap.android.map.layer.FMFacilityLayer;
-import com.fengmap.android.map.layer.FMImageLayer;
-import com.fengmap.android.map.layer.FMModelLayer;
 import com.fengmap.android.map.marker.FMFacility;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
@@ -159,6 +157,15 @@ public class MainActivity extends BaseMapActivity {
     }
 
     /**
+     * 更新楼层控件显示楼层名称
+     */
+    @Override
+    public void updateLocateGroupView() {
+//        String groupName = ConvertUtils.convertToFloorName(mFMMap, mFMMap.getFocusGroupId());
+//        ViewHelper.setViewText(FMNavigationThirdPerson.this, R.id.btn_group_control, groupName);
+    }
+
+    /**
      * 模型点击事件
      */
     private OnFMNodeListener mOnFMNodeListener = new OnFMNodeListener() {
@@ -219,6 +226,7 @@ public class MainActivity extends BaseMapActivity {
             popupWindow.dismissOutSide(MainActivity.this);
             switch (v.getId()) {
                 case R.id.map_navi_bt:
+
                     break;
                 default:
                     break;

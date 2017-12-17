@@ -1,4 +1,4 @@
-package com.example.xu.shoppingmallnavigation;
+package com.example.xu.shoppingmallnavigation.helper;
 
 import android.content.Context;
 
