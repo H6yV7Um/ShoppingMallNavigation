@@ -20,11 +20,13 @@ import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
 import com.example.xu.shoppingmallnavigation.helper.ViewHelper;
 import com.example.xu.shoppingmallnavigation.ui.activity.adapter.MapSearchAdapter;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
+import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
 import com.fengmap.android.map.marker.FMFacility;
+import com.fengmap.android.map.marker.FMLocationMarker;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
 
@@ -45,10 +47,21 @@ public class MainActivity extends BaseMapActivity {
     @BindView(R.id.mapview_error)
     TextView tvError;
 
+    @BindView(R.id.btn_group_control)
+    TextView tvGroup;
+
     private SearchView mSearchView;
     private MapSearchAdapter mapSearchAdapter;
     private SearchView.SearchAutoComplete mSearchAutoComplete;
     private MapPopupWindow popupWindow;
+    /**
+     * 约束过定位标注
+     */
+    private FMLocationMarker mHandledMarker;
+    /**
+     * 记录上一次行走坐标
+     */
+    private FMMapCoord mLastMoveCoord;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -157,15 +170,6 @@ public class MainActivity extends BaseMapActivity {
     }
 
     /**
-     * 更新楼层控件显示楼层名称
-     */
-    @Override
-    public void updateLocateGroupView() {
-//        String groupName = ConvertUtils.convertToFloorName(mFMMap, mFMMap.getFocusGroupId());
-//        ViewHelper.setViewText(FMNavigationThirdPerson.this, R.id.btn_group_control, groupName);
-    }
-
-    /**
      * 模型点击事件
      */
     private OnFMNodeListener mOnFMNodeListener = new OnFMNodeListener() {
@@ -226,7 +230,7 @@ public class MainActivity extends BaseMapActivity {
             popupWindow.dismissOutSide(MainActivity.this);
             switch (v.getId()) {
                 case R.id.map_navi_bt:
-
+                    analyzeNavigation(stCoord, endCoord);
                     break;
                 default:
                     break;
@@ -312,5 +316,64 @@ public class MainActivity extends BaseMapActivity {
         mFMMap.updateMap();
     }
 
+    @Override
+    public void onAnimationStart() {
+        if (popupWindow != null) {
+            popupWindow.dismiss();
+            popupWindow = null;
+        }
+    }
+
+    @Override
+    public void onAnimationUpdate(FMMapCoord mapCoord, double distance, double angle) {
+        updateHandledMarker(mapCoord, angle);
+    }
+
+    /**
+     * 更新处理过定位点
+     *
+     * @param coord 坐标
+     * @param angle 角度
+     */
+    private void updateHandledMarker(FMMapCoord coord, double angle) {
+        if (mHandledMarker == null) {
+            mHandledMarker = ViewHelper.buildLocationMarker(mFMMap.getFocusGroupId(),
+                    coord);
+            mLocationLayer.addMarker(mHandledMarker);
+        } else {
+            FMMapCoord mapCoord = makeConstraint(coord);
+            mHandledMarker.updateAngleAndPosition((float) angle, mapCoord);
+
+            if (angle != 0) {
+                animateRotate((float) -angle);
+            }
+        }
+
+        //上次真实行走坐标
+        mLastMoveCoord = coord.clone();
+        moveToCenter(mLastMoveCoord);
+    }
+
+    /**
+     * 路径约束
+     *
+     * @param mapCoord 地图坐标点
+     * @return
+     */
+    private FMMapCoord makeConstraint(FMMapCoord mapCoord) {
+        FMMapCoord currentCoord = mapCoord.clone();
+        int groupId = mFMMap.getFocusGroupId();
+        //获取当层行走结果集合
+        ArrayList<FMMapCoord> coords = ConvertUtils.getMapCoords(mNaviAnalyser.getNaviResults(), groupId);
+        //路径约束
+        mNaviAnalyser.naviConstraint(groupId, coords, mLastMoveCoord, currentCoord);
+        return currentCoord;
+    }
+
+    @Override
+    public void updateLocateGroupView() {
+        String groupName = ConvertUtils.convertToFloorName(mFMMap, mFMMap.getFocusGroupId());
+        tvGroup.setText(groupName);
+    }
 
 }

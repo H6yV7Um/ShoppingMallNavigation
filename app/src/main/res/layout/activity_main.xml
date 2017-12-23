@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -22,8 +22,7 @@
     <TextView
         android:id="@+id/mapview_error"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="10"
+        android:layout_height="match_parent"
         android:gravity="center"
         android:text="地图加载失败，请联系作者..."
         android:visibility="gone"/>
@@ -31,9 +30,21 @@
 
     <com.fengmap.android.map.FMMapView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="10"
+        android:layout_height="match_parent"
         android:id="@+id/mapview" />
 
+    <TextView
+        android:id="@+id/btn_group_control"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="50dp"
+        android:layout_marginLeft="10dp"
+        android:background="@drawable/shape_bg_rect_white"
+        android:padding="13dp"
+        android:text="F1"
+        android:textColor="#000000"
+        android:textSize="14sp" />
 
-</LinearLayout>
+
+</RelativeLayout>

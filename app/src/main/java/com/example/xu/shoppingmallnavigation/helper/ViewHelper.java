@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import com.fengmap.android.map.geometry.FMMapCoord;
 import com.fengmap.android.map.marker.FMImageMarker;
 import com.fengmap.android.map.marker.FMLineMarker;
+import com.fengmap.android.map.marker.FMLocationMarker;
 import com.fengmap.android.map.marker.FMSegment;
 
 import java.util.ArrayList;
@@ -45,6 +46,36 @@ public class ViewHelper {
         FMLineMarker lineMarker = new FMLineMarker(segments);
         lineMarker.setLineWidth(3.0f);
         return lineMarker;
+    }
+
+    /**
+     * 创建定位标注
+     *
+     * @param groupId  楼层id
+     * @param mapCoord 坐标点
+     * @return
+     */
+    public static FMLocationMarker buildLocationMarker(int groupId, FMMapCoord mapCoord) {
+        return buildLocationMarker(groupId, mapCoord, 0f);
+    }
+
+    /**
+     * 创建定位标注
+     *
+     * @param groupId  楼层id
+     * @param mapCoord 坐标点
+     * @param angle    方向
+     * @return
+     */
+    public static FMLocationMarker buildLocationMarker(int groupId, FMMapCoord mapCoord, float angle) {
+        FMLocationMarker locationMarker = new FMLocationMarker(groupId, mapCoord);
+        //设置定位点图片
+        locationMarker.setActiveImageFromAssets("active.png");
+        //设置定位图片宽高
+        locationMarker.setMarkerWidth(90);
+        locationMarker.setMarkerHeight(90);
+        locationMarker.setAngle(angle);
+        return locationMarker;
     }
 
 }
