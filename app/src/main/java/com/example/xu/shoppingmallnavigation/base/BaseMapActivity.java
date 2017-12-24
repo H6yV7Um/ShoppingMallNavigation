@@ -121,7 +121,6 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         super.setContentView(getLayoutId());
-        initViews();
         requestPermission();
     }
 
@@ -488,8 +487,6 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     public abstract int getLayoutId();
 
     public abstract int getMapViewId();
-
-    public abstract void initViews();
 
     public abstract void showProgress();
 

@@ -1,50 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
     android:id="@+id/map_main_ll"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:weightSum="11"
     tools:context="com.example.xu.shoppingmallnavigation.ui.activity.MainActivity">
 
-    <android.support.v7.widget.Toolbar
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <android.support.v7.widget.Toolbar xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
         app:title="商城导航"
-        app:titleTextColor="@android:color/white"
-        android:background="@color/colorPrimary">
+        app:titleTextColor="@android:color/white">
 
     </android.support.v7.widget.Toolbar>
 
-    <TextView
-        android:id="@+id/mapview_error"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="地图加载失败，请联系作者..."
-        android:visibility="gone"/>
+        android:layout_height="0dp"
+        android:layout_weight="11">
+
+        <TextView
+            android:id="@+id/mapview_error"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="地图加载失败，请联系作者..."
+            android:visibility="gone" />
 
 
-    <com.fengmap.android.map.FMMapView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/mapview" />
-
-    <TextView
-        android:id="@+id/btn_group_control"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="50dp"
-        android:layout_marginLeft="10dp"
-        android:background="@drawable/shape_bg_rect_white"
-        android:padding="13dp"
-        android:text="F1"
-        android:textColor="#000000"
-        android:textSize="14sp" />
+        <com.fengmap.android.map.FMMapView
+            android:id="@+id/mapview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
 
-</RelativeLayout>
+        <TextView
+            android:id="@+id/tv_group_control"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="50dp"
+            android:layout_marginLeft="20dp"
+            android:background="@drawable/shape_bg_rect_white"
+            android:padding="13dp"
+            android:text="F1"
+            android:textColor="#000000"
+            android:textSize="14sp" />
+
+    </RelativeLayout>
+
+</LinearLayout>

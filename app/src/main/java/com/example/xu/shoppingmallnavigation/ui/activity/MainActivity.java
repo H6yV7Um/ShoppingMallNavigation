@@ -11,6 +11,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,11 +21,16 @@ import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
 import com.example.xu.shoppingmallnavigation.helper.ViewHelper;
 import com.example.xu.shoppingmallnavigation.ui.activity.adapter.MapSearchAdapter;
+import com.example.xu.shoppingmallnavigation.ui.activity.widget.GroupPopupWindow;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
 import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
+import com.fengmap.android.map.FMGroupInfo;
+import com.fengmap.android.map.FMMapInfo;
+import com.fengmap.android.map.animator.FMLinearInterpolator;
 import com.fengmap.android.map.event.OnFMNodeListener;
+import com.fengmap.android.map.event.OnFMSwitchGroupListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
 import com.fengmap.android.map.marker.FMFacility;
 import com.fengmap.android.map.marker.FMLocationMarker;
@@ -47,13 +54,15 @@ public class MainActivity extends BaseMapActivity {
     @BindView(R.id.mapview_error)
     TextView tvError;
 
-    @BindView(R.id.btn_group_control)
+    @BindView(R.id.tv_group_control)
     TextView tvGroup;
 
     private SearchView mSearchView;
     private MapSearchAdapter mapSearchAdapter;
     private SearchView.SearchAutoComplete mSearchAutoComplete;
     private MapPopupWindow popupWindow;
+    private GroupPopupWindow groupPopupWindow;
+    private ArrayList<FMGroupInfo> groups;
     /**
      * 约束过定位标注
      */
@@ -69,10 +78,22 @@ public class MainActivity extends BaseMapActivity {
         ButterKnife.bind(this);
         // 设置ActionBar
         setSupportActionBar(toolbar);
+        tvGroup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                displayGroups();
+            }
+        });
     }
 
-    public void initViews() {
-
+    private void displayGroups() {
+        FMMapInfo mapInfo = mFMMap.getFMMapInfo();
+        groups = mapInfo.getGroups();
+        ArrayList<String> data = new ArrayList<>(groups.size());
+        for (int i = 0; i < groups.size(); i++) {
+            data.add(groups.get(i).getGroupName().toUpperCase());
+        }
+        createGroupPopupWindow(data);
     }
 
     @Override
@@ -256,6 +277,24 @@ public class MainActivity extends BaseMapActivity {
         });
     }
 
+    private void createGroupPopupWindow(ArrayList<String> data) {
+        if (groupPopupWindow != null) {
+            groupPopupWindow.dismiss();
+            groupPopupWindow = null;
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter(MainActivity.this, R.layout.group_lv_item, data);
+        groupPopupWindow = new GroupPopupWindow(MainActivity.this, adapter, groupListener);
+        groupPopupWindow.showAtLocation(findViewById(R.id.map_main_ll),
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+        groupPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                groupPopupWindow.dismiss();
+                groupPopupWindow = null;
+            }
+        });
+    }
+
     private AdapterView.OnItemClickListener searchItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
@@ -329,6 +368,28 @@ public class MainActivity extends BaseMapActivity {
         updateHandledMarker(mapCoord, angle);
     }
 
+    ListView.OnItemClickListener groupListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            final int groupId = groups.get(i).getGroupId();
+            mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
+                @Override
+                public void beforeGroupChanged() {
+
+                }
+
+                @Override
+                public void afterGroupChanged() {
+                    if (groupPopupWindow != null) {
+                        groupPopupWindow.dismiss();
+                        groupPopupWindow = null;
+                    }
+                    updateLocateGroupView();
+                }
+            });
+        }
+    };
+
     /**
      * 更新处理过定位点
      *
@@ -375,5 +436,6 @@ public class MainActivity extends BaseMapActivity {
         String groupName = ConvertUtils.convertToFloorName(mFMMap, mFMMap.getFocusGroupId());
         tvGroup.setText(groupName);
     }
+
 
 }
