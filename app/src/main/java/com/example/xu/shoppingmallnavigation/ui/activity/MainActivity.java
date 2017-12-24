@@ -26,6 +26,7 @@ import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
 import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
+import com.fengmap.android.FMDevice;
 import com.fengmap.android.map.FMGroupInfo;
 import com.fengmap.android.map.FMMapInfo;
 import com.fengmap.android.map.animator.FMLinearInterpolator;
@@ -36,6 +37,7 @@ import com.fengmap.android.map.marker.FMFacility;
 import com.fengmap.android.map.marker.FMLocationMarker;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
+import com.fengmap.android.widget.FMSwitchFloorComponent;
 
 import java.util.ArrayList;
 
@@ -54,9 +56,6 @@ public class MainActivity extends BaseMapActivity {
     @BindView(R.id.mapview_error)
     TextView tvError;
 
-    @BindView(R.id.tv_group_control)
-    TextView tvGroup;
-
     private SearchView mSearchView;
     private MapSearchAdapter mapSearchAdapter;
     private SearchView.SearchAutoComplete mSearchAutoComplete;
@@ -71,6 +70,7 @@ public class MainActivity extends BaseMapActivity {
      * 记录上一次行走坐标
      */
     private FMMapCoord mLastMoveCoord;
+    private int curGroupId;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,12 +78,12 @@ public class MainActivity extends BaseMapActivity {
         ButterKnife.bind(this);
         // 设置ActionBar
         setSupportActionBar(toolbar);
-        tvGroup.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                displayGroups();
-            }
-        });
+//        tvGroup.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                displayGroups();
+//            }
+//        });
     }
 
     private void displayGroups() {
@@ -101,6 +101,32 @@ public class MainActivity extends BaseMapActivity {
         super.onMapInitSuccess(path);
         mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
         mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
+
+        curGroupId = 0;
+        fmSwitchFloorComponent = new FMSwitchFloorComponent(this);
+        //最多显示10个
+        fmSwitchFloorComponent.setMaxItemCount(10);
+        fmSwitchFloorComponent.setOnFMSwitchFloorComponentListener(new FMSwitchFloorComponent.OnFMSwitchFloorComponentListener() {
+            @Override
+            public boolean onItemSelected(int groupId, final String floorName) {
+                curGroupId = groupId;
+                mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
+                    @Override
+                    public void beforeGroupChanged() {
+
+                    }
+
+                    @Override
+                    public void afterGroupChanged() {
+                        updateLocateGroupView(floorName);
+                    }
+                });
+                return true;
+            }
+        });
+        fmSwitchFloorComponent.setFloorDataFromFMMapInfo(mFMMap.getFMMapInfo(), mFMMap.getFocusGroupId());
+
+        mMapView.addComponent(fmSwitchFloorComponent, 50, 1300);
         hideProgress();
     }
 
@@ -283,7 +309,7 @@ public class MainActivity extends BaseMapActivity {
             groupPopupWindow = null;
         }
         ArrayAdapter<String> adapter = new ArrayAdapter(MainActivity.this, R.layout.group_lv_item, data);
-        groupPopupWindow = new GroupPopupWindow(MainActivity.this, adapter, groupListener);
+        groupPopupWindow = new GroupPopupWindow(MainActivity.this, adapter, null);
         groupPopupWindow.showAtLocation(findViewById(R.id.map_main_ll),
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
         groupPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
@@ -368,27 +394,23 @@ public class MainActivity extends BaseMapActivity {
         updateHandledMarker(mapCoord, angle);
     }
 
-    ListView.OnItemClickListener groupListener = new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            final int groupId = groups.get(i).getGroupId();
-            mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
-                @Override
-                public void beforeGroupChanged() {
-
-                }
-
-                @Override
-                public void afterGroupChanged() {
-                    if (groupPopupWindow != null) {
-                        groupPopupWindow.dismiss();
-                        groupPopupWindow = null;
-                    }
-                    updateLocateGroupView();
-                }
-            });
-        }
-    };
+//    ListView.OnItemClickListener groupListener = new AdapterView.OnItemClickListener() {
+//        @Override
+//        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//            final int groupId = groups.get(i).getGroupId();
+//            mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
+//                @Override
+//                public void beforeGroupChanged() {
+//
+//                }
+//
+//                @Override
+//                public void afterGroupChanged() {
+//                    updateLocateGroupView();
+//                }
+//            });
+//        }
+//    };
 
     /**
      * 更新处理过定位点
@@ -432,9 +454,8 @@ public class MainActivity extends BaseMapActivity {
     }
 
     @Override
-    public void updateLocateGroupView() {
-        String groupName = ConvertUtils.convertToFloorName(mFMMap, mFMMap.getFocusGroupId());
-        tvGroup.setText(groupName);
+    public void updateLocateGroupView(String floorName) {
+
     }
 
 

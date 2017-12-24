@@ -39,6 +39,7 @@ import com.fengmap.android.map.marker.FMLocationMarker;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMSegment;
 import com.fengmap.android.utils.FMMath;
+import com.fengmap.android.widget.FMSwitchFloorComponent;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -84,6 +85,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
      * 差值动画
      */
     protected FMNaviUtils mNaviUtils;
+    protected FMSwitchFloorComponent fmSwitchFloorComponent;
     /**
      * 导航行走索引
      */
@@ -109,7 +111,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
             super.handleMessage(msg);
             switch (msg.what) {
                 case WHAT_LOCATE_SWITCH_GROUP:
-                    updateLocateGroupView();
+                    updateLocateGroupView("");
                     break;
             }
         }
@@ -212,6 +214,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         //差值动画
         mNaviUtils = new FMNaviUtils();
         mNaviUtils.setFMLocationListener(this);
+
     }
 
     @Override
@@ -497,7 +500,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     /**
      * 切换楼层显示
      */
-    public abstract void updateLocateGroupView();
+    public abstract void updateLocateGroupView(String floorName);
 
     @Override
     public void onAnimationEnd() {
@@ -525,7 +528,6 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
-
 
 
 }
