@@ -55,9 +55,9 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     protected FMMap mFMMap;
     protected FMSearchAnalyser mSearchAnalyser;
     protected FMNaviAnalyser mNaviAnalyser;
-    protected FMModelLayer mModelLayer;
+    protected ArrayList<FMModelLayer> mModelLayers;
     protected FMLineLayer mLineLayer;
-    protected FMFacilityLayer mFacilityLayer;
+    protected ArrayList<FMFacilityLayer> mFacilityLayers;
     protected FMModel mClickedModel;
     protected FMFacility mClickedFacility;
     protected FMLocationLayer mLocationLayer;
@@ -90,6 +90,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
      * 导航行走索引
      */
     protected int mCurrentIndex = 0;
+    protected int curGroupId;
     /**
      * 两个点相差最大距离20米
      */
@@ -161,10 +162,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         //加载离线主题文件
         mFMMap.loadThemeByPath(FileUtils.getDefaultThemePath(this));
 
-        int groupId = mFMMap.getFocusGroupId();
-        //公共设施图层
-        mFacilityLayer = mFMMap.getFMLayerProxy().getFMFacilityLayer(groupId);
-        mFMMap.addLayer(mFacilityLayer);
+        curGroupId = mFMMap.getFocusGroupId();
 
         //图片图层
         int groupSize = mFMMap.getFMMapInfo().getGroupSize();
@@ -173,12 +171,26 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
             FMImageLayer imageLayer = mFMMap.getFMLayerProxy().createFMImageLayer(tempId);
             mFMMap.addLayer(imageLayer);
 
-            mImageLayers.put(groupId, imageLayer);
+            mImageLayers.put(curGroupId, imageLayer);
+        }
+
+        //公共设施图层
+        mFacilityLayers = new ArrayList<>(groupSize);
+        for (int i = 1; i <= groupSize; i++) {
+            FMFacilityLayer temp = mFMMap.getFMLayerProxy().getFMFacilityLayer(i);
+            mFMMap.addLayer(temp);
+            mFacilityLayers.add(temp);
         }
 
         //模型图层
-        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(groupId);
-        mFMMap.addLayer(mModelLayer);
+        mModelLayers = new ArrayList<>(groupSize);
+        for (int i = 1; i <= groupSize; i++) {
+            FMModelLayer temp = mFMMap.getFMLayerProxy().getFMModelLayer(i);
+            mFMMap.addLayer(temp);
+            mModelLayers.add(temp);
+        }
+//        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(2);
+//        mFMMap.addLayer(mModelLayer);
 
         //添加线图层
         mLineLayer = mFMMap.getFMLayerProxy().getFMLineLayer();
@@ -191,7 +203,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         stCoord = new MapCoord(1, new FMMapCoord(12961647.576796599, 4861814.63807118));
         endCoord = new MapCoord(6, new FMMapCoord(12961699.79823795, 4861826.46384646));
         //真实定位返回的地图坐标mapCoord和角度angle
-        FMLocationMarker locationMarker = new FMLocationMarker(groupId, stCoord.getMapCoord());
+        FMLocationMarker locationMarker = new FMLocationMarker(curGroupId, stCoord.getMapCoord());
         //设置定位点图片
         locationMarker.setActiveImageFromAssets("active.png");
         //设置定位图片宽高

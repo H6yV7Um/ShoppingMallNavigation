@@ -11,8 +11,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,18 +19,16 @@ import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
 import com.example.xu.shoppingmallnavigation.helper.ViewHelper;
 import com.example.xu.shoppingmallnavigation.ui.activity.adapter.MapSearchAdapter;
-import com.example.xu.shoppingmallnavigation.ui.activity.widget.GroupPopupWindow;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
 import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
-import com.fengmap.android.FMDevice;
-import com.fengmap.android.map.FMGroupInfo;
-import com.fengmap.android.map.FMMapInfo;
 import com.fengmap.android.map.animator.FMLinearInterpolator;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.event.OnFMSwitchGroupListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
+import com.fengmap.android.map.layer.FMFacilityLayer;
+import com.fengmap.android.map.layer.FMModelLayer;
 import com.fengmap.android.map.marker.FMFacility;
 import com.fengmap.android.map.marker.FMLocationMarker;
 import com.fengmap.android.map.marker.FMModel;
@@ -60,8 +56,6 @@ public class MainActivity extends BaseMapActivity {
     private MapSearchAdapter mapSearchAdapter;
     private SearchView.SearchAutoComplete mSearchAutoComplete;
     private MapPopupWindow popupWindow;
-    private GroupPopupWindow groupPopupWindow;
-    private ArrayList<FMGroupInfo> groups;
     /**
      * 约束过定位标注
      */
@@ -70,7 +64,6 @@ public class MainActivity extends BaseMapActivity {
      * 记录上一次行走坐标
      */
     private FMMapCoord mLastMoveCoord;
-    private int curGroupId;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,29 +71,18 @@ public class MainActivity extends BaseMapActivity {
         ButterKnife.bind(this);
         // 设置ActionBar
         setSupportActionBar(toolbar);
-//        tvGroup.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                displayGroups();
-//            }
-//        });
-    }
-
-    private void displayGroups() {
-        FMMapInfo mapInfo = mFMMap.getFMMapInfo();
-        groups = mapInfo.getGroups();
-        ArrayList<String> data = new ArrayList<>(groups.size());
-        for (int i = 0; i < groups.size(); i++) {
-            data.add(groups.get(i).getGroupName().toUpperCase());
-        }
-        createGroupPopupWindow(data);
     }
 
     @Override
     public void onMapInitSuccess(String path) {
         super.onMapInitSuccess(path);
-        mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
-        mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
+        for (FMModelLayer mModelLayer : mModelLayers) {
+            mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
+        }
+
+        for (FMFacilityLayer mFacilityLayer: mFacilityLayers) {
+            mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
+        }
 
         curGroupId = 0;
         fmSwitchFloorComponent = new FMSwitchFloorComponent(this);
@@ -108,8 +90,8 @@ public class MainActivity extends BaseMapActivity {
         fmSwitchFloorComponent.setMaxItemCount(10);
         fmSwitchFloorComponent.setOnFMSwitchFloorComponentListener(new FMSwitchFloorComponent.OnFMSwitchFloorComponentListener() {
             @Override
-            public boolean onItemSelected(int groupId, final String floorName) {
-                curGroupId = groupId;
+            public boolean onItemSelected(final int groupId, final String floorName) {
+
                 mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
                     @Override
                     public void beforeGroupChanged() {
@@ -119,6 +101,8 @@ public class MainActivity extends BaseMapActivity {
                     @Override
                     public void afterGroupChanged() {
                         updateLocateGroupView(floorName);
+                        curGroupId = groupId;
+                        Log.i("test", "cur id: " + curGroupId);
                     }
                 });
                 return true;
@@ -233,7 +217,7 @@ public class MainActivity extends BaseMapActivity {
 
 //            FMMapCoord centerMapCoord = model.getCenterMapCoord();
 //
-            createPopupWindow(mClickedModel.getName(), "");
+            createPopupWindow(mClickedModel.getName(), "", false);
 //            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
             return true;
         }
@@ -259,7 +243,7 @@ public class MainActivity extends BaseMapActivity {
             mFMMap.updateMap();
 //            FMMapCoord centerMapCoord = facility.getPosition();
 
-            createPopupWindow(facility.getName(), "");
+            createPopupWindow(facility.getName(), "", true);
             return true;
         }
 
@@ -285,7 +269,7 @@ public class MainActivity extends BaseMapActivity {
         }
     };
 
-    private void createPopupWindow(String name, String distance) {
+    private void createPopupWindow(String name, String distance, final boolean isFacility) {
         if (popupWindow != null) {
             popupWindow.dismiss();
             popupWindow = null;
@@ -296,30 +280,17 @@ public class MainActivity extends BaseMapActivity {
         popupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
             @Override
             public void onDismiss() {
-                clearFocus(mClickedModel);
+                if (isFacility) {
+                    clearFacilityAll(mClickedFacility);
+                } else {
+                    clearModelAll(mClickedModel);
+                }
                 popupWindow.dismiss();
                 popupWindow = null;
             }
         });
     }
 
-    private void createGroupPopupWindow(ArrayList<String> data) {
-        if (groupPopupWindow != null) {
-            groupPopupWindow.dismiss();
-            groupPopupWindow = null;
-        }
-        ArrayAdapter<String> adapter = new ArrayAdapter(MainActivity.this, R.layout.group_lv_item, data);
-        groupPopupWindow = new GroupPopupWindow(MainActivity.this, adapter, null);
-        groupPopupWindow.showAtLocation(findViewById(R.id.map_main_ll),
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
-        groupPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                groupPopupWindow.dismiss();
-                groupPopupWindow = null;
-            }
-        });
-    }
 
     private AdapterView.OnItemClickListener searchItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -344,7 +315,7 @@ public class MainActivity extends BaseMapActivity {
 
 //            clearImageMarker();
 
-            createPopupWindow(model.getName(), "");
+            createPopupWindow(model.getName(), "", false);
 
             //添加图片
 //            FMImageMarker imageMarker = MapSearchUtils.buildImageMarker(getResources(), mapCoord);
@@ -377,6 +348,28 @@ public class MainActivity extends BaseMapActivity {
             }
             this.mLastClicked = model;
             this.mLastClicked.setSelected(true);
+        }
+        mFMMap.updateMap();
+    }
+
+    private void clearModelAll(FMModel model) {
+        if (!model.equals(mClickedFacility)) {
+            if (mLastClicked != null) {
+                mLastClicked.setSelected(false);
+            }
+            this.mLastClicked = model;
+            this.mLastClicked.setSelected(false);
+        }
+        mFMMap.updateMap();
+    }
+
+    private void clearFacilityAll(FMFacility facility) {
+        if (!facility.equals(mClickedFacility)) {
+            if (mClickedFacility != null) {
+                mClickedFacility.setSelected(false);
+            }
+            this.mClickedFacility = facility;
+            this.mClickedFacility.setSelected(false);
         }
         mFMMap.updateMap();
     }
