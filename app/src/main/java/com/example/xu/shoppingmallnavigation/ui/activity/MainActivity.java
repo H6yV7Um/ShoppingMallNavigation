@@ -395,30 +395,16 @@ public class MainActivity extends BaseMapActivity {
             popupWindow.dismiss();
             popupWindow = null;
         }
+        if (naviEndPopupWindow != null) {
+            naviEndPopupWindow.dismiss();
+            naviEndPopupWindow = null;
+        }
     }
 
     @Override
     public void onAnimationUpdate(FMMapCoord mapCoord, double distance, double angle) {
         updateHandledMarker(mapCoord, angle);
     }
-
-//    ListView.OnItemClickListener groupListener = new AdapterView.OnItemClickListener() {
-//        @Override
-//        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//            final int groupId = groups.get(i).getGroupId();
-//            mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
-//                @Override
-//                public void beforeGroupChanged() {
-//
-//                }
-//
-//                @Override
-//                public void afterGroupChanged() {
-//                    updateLocateGroupView();
-//                }
-//            });
-//        }
-//    };
 
     /**
      * 更新处理过定位点
@@ -474,6 +460,7 @@ public class MainActivity extends BaseMapActivity {
     public void naviEndClosed() {
         mFMMap.removeLayer(mStartImageLayer);
         mFMMap.removeLayer(mEndImageLayer);
+        mLineLayer.removeMarker(curFMLineMarker);
         if (mClickedFacility != null) {
             mClickedFacility.setSelected(false);
         }
@@ -494,11 +481,6 @@ public class MainActivity extends BaseMapActivity {
         naviEndPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
             @Override
             public void onDismiss() {
-//                if (isFacility) {
-//                    clearFacilityAll(mClickedFacility);
-//                } else {
-//                    clearModelAll(mClickedModel);
-//                }
                 naviEndPopupWindow.dismiss();
                 naviEndPopupWindow = null;
             }

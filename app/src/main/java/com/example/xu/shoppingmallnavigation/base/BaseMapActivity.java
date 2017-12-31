@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.SparseArray;
 import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
@@ -43,7 +44,6 @@ import com.fengmap.android.widget.FMSwitchFloorComponent;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Created by Xu on 2017/12/5.
@@ -64,7 +64,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     protected FMModel mLastClicked;
     protected MapCoord stCoord;
     protected MapCoord endCoord;
-    protected HashMap<Integer, FMImageLayer> mImageLayers = new HashMap<>();
+    protected SparseArray<FMImageLayer> mImageLayers = new SparseArray<>();
     /**
      * 起点图层
      */
@@ -81,6 +81,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
      * 导航行走点集合
      */
     protected ArrayList<ArrayList<FMMapCoord>> mNaviPoints;
+    protected FMLineMarker curFMLineMarker;
     /**
      * 差值动画
      */
@@ -106,7 +107,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     /**
      * 处理UI消息
      */
-    protected Handler mHandler = new Handler() {
+    protected static Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -247,9 +248,11 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
      * 清除图片标志
      */
     protected void clearImageMarker() {
-        for (FMImageLayer imageLayer : mImageLayers.values()) {
-            imageLayer.removeAll();
+        for (int i = 0; i < mImageLayers.size(); i++) {
+            FMImageLayer temp = mImageLayers.get(i);
+            temp.removeAll();
         }
+
     }
 
     /**
@@ -304,8 +307,6 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         //开始进行模拟行走
         int groupId = getWillWalkingGroupId();
         setFocusGroupId(groupId);
-
-
     }
 
     /**
@@ -412,6 +413,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
 
         //添加LineMarker
         FMLineMarker lineMarker = ViewHelper.buildLineMarker(segments);
+        curFMLineMarker = lineMarker;
         mLineLayer.addMarker(lineMarker);
 
     }
