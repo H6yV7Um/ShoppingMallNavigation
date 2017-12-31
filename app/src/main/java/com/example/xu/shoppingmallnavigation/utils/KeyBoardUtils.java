@@ -1,5 +1,6 @@
 package com.example.xu.shoppingmallnavigation.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -20,5 +21,16 @@ public class KeyBoardUtils {
         InputMethodManager imm = (InputMethodManager) context
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+    }
+
+    /**
+     * 关闭软键盘
+     *
+     * @param activity
+     */
+    public static void closeKeybord(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(activity.getWindow().getDecorView().getWindowToken(), 0);
     }
 }

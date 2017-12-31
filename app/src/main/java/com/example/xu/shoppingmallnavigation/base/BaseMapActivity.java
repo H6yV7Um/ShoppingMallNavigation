@@ -112,7 +112,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
             super.handleMessage(msg);
             switch (msg.what) {
                 case WHAT_LOCATE_SWITCH_GROUP:
-                    updateLocateGroupView("");
+//                    updateLocateGroupView("");
                     break;
             }
         }
@@ -227,6 +227,8 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         mNaviUtils = new FMNaviUtils();
         mNaviUtils.setFMLocationListener(this);
 
+        mNaviGroupIds = new ArrayList<>();
+
     }
 
     @Override
@@ -302,6 +304,8 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         //开始进行模拟行走
         int groupId = getWillWalkingGroupId();
         setFocusGroupId(groupId);
+
+
     }
 
     /**
@@ -509,15 +513,13 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
 
     public abstract void showFailMsg(String msg);
 
-    /**
-     * 切换楼层显示
-     */
-    public abstract void updateLocateGroupView(String floorName);
+    public abstract void navigationEnd();
 
     @Override
     public void onAnimationEnd() {
         // 已经行走过终点
         if (isWalkComplete()) {
+            navigationEnd();
             return;
         }
 

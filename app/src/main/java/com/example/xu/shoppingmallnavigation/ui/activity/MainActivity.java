@@ -17,9 +17,11 @@ import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
+import com.example.xu.shoppingmallnavigation.bean.MapCoord;
 import com.example.xu.shoppingmallnavigation.helper.ViewHelper;
 import com.example.xu.shoppingmallnavigation.ui.activity.adapter.MapSearchAdapter;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
+import com.example.xu.shoppingmallnavigation.ui.activity.widget.NaviEndPopupWindow;
 import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
@@ -56,6 +58,7 @@ public class MainActivity extends BaseMapActivity {
     private MapSearchAdapter mapSearchAdapter;
     private SearchView.SearchAutoComplete mSearchAutoComplete;
     private MapPopupWindow popupWindow;
+    private NaviEndPopupWindow naviEndPopupWindow;
     /**
      * 约束过定位标注
      */
@@ -84,7 +87,7 @@ public class MainActivity extends BaseMapActivity {
             mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
         }
 
-        curGroupId = 0;
+        curGroupId = 1;
         fmSwitchFloorComponent = new FMSwitchFloorComponent(this);
         //最多显示10个
         fmSwitchFloorComponent.setMaxItemCount(10);
@@ -100,7 +103,6 @@ public class MainActivity extends BaseMapActivity {
 
                     @Override
                     public void afterGroupChanged() {
-                        updateLocateGroupView(floorName);
                         curGroupId = groupId;
                         Log.i("test", "cur id: " + curGroupId);
                     }
@@ -163,8 +165,7 @@ public class MainActivity extends BaseMapActivity {
         mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
-//                presenter.searchModelByKeyword(s);
-                Log.i("shopping", s);
+                KeyBoardUtils.closeKeybord(mSearchAutoComplete, MainActivity.this);
                 if (!s.equals("")) {
                     ArrayList<FMModel> models = queryModelByKeyword(s);
                     if (mapSearchAdapter == null) {
@@ -216,8 +217,8 @@ public class MainActivity extends BaseMapActivity {
             mFMMap.updateMap();
 
 //            FMMapCoord centerMapCoord = model.getCenterMapCoord();
-//
-            createPopupWindow(mClickedModel.getName(), "", false);
+            MapCoord curEndMapCoord = new MapCoord(curGroupId, model.getCenterMapCoord());
+            createPopupWindow(mClickedModel.getName(), "", stCoord, curEndMapCoord, false);
 //            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
             return true;
         }
@@ -242,8 +243,8 @@ public class MainActivity extends BaseMapActivity {
             facility.setSelected(true);
             mFMMap.updateMap();
 //            FMMapCoord centerMapCoord = facility.getPosition();
-
-            createPopupWindow(facility.getName(), "", true);
+            MapCoord curEndMapCoord = new MapCoord(curGroupId, facility.getPosition());
+            createPopupWindow(facility.getName(), "", stCoord, curEndMapCoord, true);
             return true;
         }
 
@@ -258,10 +259,23 @@ public class MainActivity extends BaseMapActivity {
         @Override
         public void onClick(View v) {
             // 隐藏弹出窗口
-            popupWindow.dismissOutSide(MainActivity.this);
             switch (v.getId()) {
                 case R.id.map_navi_bt:
+                    if (popupWindow != null) {
+                        popupWindow.dismiss();
+                        popupWindow = null;
+                    }
+                    if (mSearchView != null) {
+                        mSearchView.clearFocus();
+                    }
                     analyzeNavigation(stCoord, endCoord);
+                    break;
+                case R.id.navi_end_close_bt:
+                    if (naviEndPopupWindow != null) {
+                        naviEndPopupWindow.dismiss();
+                        naviEndPopupWindow = null;
+                    }
+                    naviEndClosed();
                     break;
                 default:
                     break;
@@ -269,11 +283,12 @@ public class MainActivity extends BaseMapActivity {
         }
     };
 
-    private void createPopupWindow(String name, String distance, final boolean isFacility) {
+    private void createPopupWindow(String name, String distance, MapCoord curStartCoord, MapCoord curEndCoord, final boolean isFacility) {
         if (popupWindow != null) {
             popupWindow.dismiss();
             popupWindow = null;
         }
+        endCoord = curEndCoord;
         popupWindow = new MapPopupWindow(MainActivity.this, listener, name, distance);
         popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
@@ -314,8 +329,8 @@ public class MainActivity extends BaseMapActivity {
             mFMMap.moveToCenter(mapCoord, false);
 
 //            clearImageMarker();
-
-            createPopupWindow(model.getName(), "", false);
+            MapCoord curEndMapCoord = new MapCoord(curGroupId, mapCoord);
+            createPopupWindow(model.getName(), "", stCoord, curEndMapCoord, false);
 
             //添加图片
 //            FMImageMarker imageMarker = MapSearchUtils.buildImageMarker(getResources(), mapCoord);
@@ -341,16 +356,16 @@ public class MainActivity extends BaseMapActivity {
      *
      * @param model 模型
      */
-    private void clearFocus(FMModel model) {
-        if (!model.equals(mLastClicked)) {
-            if (mLastClicked != null) {
-                mLastClicked.setSelected(false);
-            }
-            this.mLastClicked = model;
-            this.mLastClicked.setSelected(true);
-        }
-        mFMMap.updateMap();
-    }
+//    private void clearFocus(FMModel model) {
+//        if (!model.equals(mLastClicked)) {
+//            if (mLastClicked != null) {
+//                mLastClicked.setSelected(false);
+//            }
+//            this.mLastClicked = model;
+//            this.mLastClicked.setSelected(true);
+//        }
+//        mFMMap.updateMap();
+//    }
 
     private void clearModelAll(FMModel model) {
         if (!model.equals(mClickedFacility)) {
@@ -446,10 +461,48 @@ public class MainActivity extends BaseMapActivity {
         return currentCoord;
     }
 
-    @Override
-    public void updateLocateGroupView(String floorName) {
-
+    public void navigationEnd() {
+        // 可记录！！
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                createNaviEndPopupWindow();
+            }
+        });
     }
 
+    public void naviEndClosed() {
+        mFMMap.removeLayer(mStartImageLayer);
+        mFMMap.removeLayer(mEndImageLayer);
+        if (mClickedFacility != null) {
+            mClickedFacility.setSelected(false);
+        }
+        if (mClickedModel != null) {
+            mClickedModel.setSelected(false);
+        }
+        mFMMap.updateMap();
+    }
+
+    private void createNaviEndPopupWindow() {
+        if (naviEndPopupWindow != null) {
+            naviEndPopupWindow.dismiss();
+            naviEndPopupWindow = null;
+        }
+        naviEndPopupWindow = new NaviEndPopupWindow(MainActivity.this, listener);
+        naviEndPopupWindow.showAtLocation(findViewById(R.id.map_main_ll),
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+        naviEndPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+//                if (isFacility) {
+//                    clearFacilityAll(mClickedFacility);
+//                } else {
+//                    clearModelAll(mClickedModel);
+//                }
+                naviEndPopupWindow.dismiss();
+                naviEndPopupWindow = null;
+            }
+        });
+    }
 
 }
