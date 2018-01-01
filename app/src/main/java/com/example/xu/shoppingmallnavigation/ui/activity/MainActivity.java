@@ -104,7 +104,6 @@ public class MainActivity extends BaseMapActivity {
                     @Override
                     public void afterGroupChanged() {
                         curGroupId = groupId;
-                        Log.i("test", "cur id: " + curGroupId);
                     }
                 });
                 return true;
@@ -218,7 +217,9 @@ public class MainActivity extends BaseMapActivity {
 
 //            FMMapCoord centerMapCoord = model.getCenterMapCoord();
             MapCoord curEndMapCoord = new MapCoord(curGroupId, model.getCenterMapCoord());
-            createPopupWindow(mClickedModel.getName(), "", stCoord, curEndMapCoord, false);
+            if (!mClickedModel.getName().equals("")) {
+                createPopupWindow(mClickedModel.getName(), "", stCoord, curEndMapCoord, false);
+            }
 //            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
             return true;
         }
@@ -269,6 +270,9 @@ public class MainActivity extends BaseMapActivity {
                         mSearchView.clearFocus();
                     }
                     analyzeNavigation(stCoord, endCoord);
+                    // 将当前终点置为起点
+                    stCoord = endCoord;
+                    endCoord = null;
                     break;
                 case R.id.navi_end_close_bt:
                     if (naviEndPopupWindow != null) {
@@ -288,6 +292,7 @@ public class MainActivity extends BaseMapActivity {
             popupWindow.dismiss();
             popupWindow = null;
         }
+        stCoord = curStartCoord;
         endCoord = curEndCoord;
         popupWindow = new MapPopupWindow(MainActivity.this, listener, name, distance);
         popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
@@ -461,6 +466,7 @@ public class MainActivity extends BaseMapActivity {
         mFMMap.removeLayer(mStartImageLayer);
         mFMMap.removeLayer(mEndImageLayer);
         mLineLayer.removeMarker(curFMLineMarker);
+        mLocationLayer.removeMarker(startLocationMarker);
         if (mClickedFacility != null) {
             mClickedFacility.setSelected(false);
         }

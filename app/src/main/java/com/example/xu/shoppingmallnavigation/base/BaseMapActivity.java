@@ -82,6 +82,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
      */
     protected ArrayList<ArrayList<FMMapCoord>> mNaviPoints;
     protected FMLineMarker curFMLineMarker;
+    protected FMLocationMarker startLocationMarker;
     /**
      * 差值动画
      */
@@ -202,17 +203,16 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         mFMMap.addLayer(mLocationLayer);
 
         stCoord = new MapCoord(1, new FMMapCoord(12961647.576796599, 4861814.63807118));
-        endCoord = new MapCoord(6, new FMMapCoord(12961699.79823795, 4861826.46384646));
+        endCoord = null;
         //真实定位返回的地图坐标mapCoord和角度angle
-        FMLocationMarker locationMarker = new FMLocationMarker(curGroupId, stCoord.getMapCoord());
+        startLocationMarker = new FMLocationMarker(curGroupId, stCoord.getMapCoord());
         //设置定位点图片
-        locationMarker.setActiveImageFromAssets("active.png");
+        startLocationMarker.setActiveImageFromAssets("active.png");
         //设置定位图片宽高
-        locationMarker.setMarkerWidth(30);
-        locationMarker.setMarkerHeight(30);
-        locationMarker.setAngle(0);
-        mLocationLayer.addMarker(locationMarker);
-
+        startLocationMarker.setMarkerWidth(80);
+        startLocationMarker.setMarkerHeight(80);
+        startLocationMarker.setAngle(0);
+        mLocationLayer.addMarker(startLocationMarker);
 
         //搜索，导航分析
         try {
@@ -227,8 +227,6 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         //差值动画
         mNaviUtils = new FMNaviUtils();
         mNaviUtils.setFMLocationListener(this);
-
-        mNaviGroupIds = new ArrayList<>();
 
     }
 
