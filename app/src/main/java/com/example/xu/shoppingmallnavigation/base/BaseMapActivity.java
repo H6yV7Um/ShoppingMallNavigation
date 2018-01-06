@@ -26,7 +26,9 @@ import com.fengmap.android.exception.FMObjectException;
 import com.fengmap.android.map.FMMap;
 import com.fengmap.android.map.FMMapUpgradeInfo;
 import com.fengmap.android.map.FMMapView;
+import com.fengmap.android.map.animator.FMLinearInterpolator;
 import com.fengmap.android.map.event.OnFMMapInitListener;
+import com.fengmap.android.map.event.OnFMSwitchGroupListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
 import com.fengmap.android.map.layer.FMFacilityLayer;
 import com.fengmap.android.map.layer.FMImageLayer;
@@ -191,8 +193,6 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
             mFMMap.addLayer(temp);
             mModelLayers.add(temp);
         }
-//        mModelLayer = mFMMap.getFMLayerProxy().getFMModelLayer(2);
-//        mFMMap.addLayer(mModelLayer);
 
         //添加线图层
         mLineLayer = mFMMap.getFMLayerProxy().getFMLineLayer();
@@ -223,6 +223,31 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+        fmSwitchFloorComponent = new FMSwitchFloorComponent(this);
+        //最多显示10个
+        fmSwitchFloorComponent.setMaxItemCount(10);
+        fmSwitchFloorComponent.setOnFMSwitchFloorComponentListener(new FMSwitchFloorComponent.OnFMSwitchFloorComponentListener() {
+            @Override
+            public boolean onItemSelected(final int groupId, final String floorName) {
+
+                mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
+                    @Override
+                    public void beforeGroupChanged() {
+
+                    }
+
+                    @Override
+                    public void afterGroupChanged() {
+                        curGroupId = groupId;
+                    }
+                });
+                return true;
+            }
+        });
+        fmSwitchFloorComponent.setFloorDataFromFMMapInfo(mFMMap.getFMMapInfo(), mFMMap.getFocusGroupId());
+
+        mMapView.addComponent(fmSwitchFloorComponent, 50, 1300);
 
         //差值动画
         mNaviUtils = new FMNaviUtils();

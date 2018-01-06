@@ -82,36 +82,10 @@ public class MainActivity extends BaseMapActivity {
         for (FMModelLayer mModelLayer : mModelLayers) {
             mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
         }
-
         for (FMFacilityLayer mFacilityLayer: mFacilityLayers) {
             mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
         }
-
         curGroupId = 1;
-        fmSwitchFloorComponent = new FMSwitchFloorComponent(this);
-        //最多显示10个
-        fmSwitchFloorComponent.setMaxItemCount(10);
-        fmSwitchFloorComponent.setOnFMSwitchFloorComponentListener(new FMSwitchFloorComponent.OnFMSwitchFloorComponentListener() {
-            @Override
-            public boolean onItemSelected(final int groupId, final String floorName) {
-
-                mFMMap.setFocusByGroupIdAnimated(groupId, new FMLinearInterpolator(), new OnFMSwitchGroupListener() {
-                    @Override
-                    public void beforeGroupChanged() {
-
-                    }
-
-                    @Override
-                    public void afterGroupChanged() {
-                        curGroupId = groupId;
-                    }
-                });
-                return true;
-            }
-        });
-        fmSwitchFloorComponent.setFloorDataFromFMMapInfo(mFMMap.getFMMapInfo(), mFMMap.getFocusGroupId());
-
-        mMapView.addComponent(fmSwitchFloorComponent, 50, 1300);
         hideProgress();
     }
 
@@ -165,19 +139,19 @@ public class MainActivity extends BaseMapActivity {
             @Override
             public boolean onQueryTextSubmit(String s) {
                 KeyBoardUtils.closeKeybord(mSearchAutoComplete, MainActivity.this);
-                if (!s.equals("")) {
-                    ArrayList<FMModel> models = queryModelByKeyword(s);
-                    if (mapSearchAdapter == null) {
-                        mapSearchAdapter = new MapSearchAdapter(MainActivity.this, models);
-                        mSearchAutoComplete.setAdapter(mapSearchAdapter);
-                    } else {
-                        mapSearchAdapter.setDatas(models);
-                        mapSearchAdapter.notifyDataSetChanged();
-                    }
-                } else {
-                    Toast.makeText(MainActivity.this, "请输入搜索词！", Toast.LENGTH_LONG).show();
-                }
-                mapSearchAdapter = null;
+//                if (!s.equals("")) {
+//                    ArrayList<FMModel> models = queryModelByKeyword(s);
+//                    if (mapSearchAdapter == null) {
+//                        mapSearchAdapter = new MapSearchAdapter(MainActivity.this, models);
+//                        mSearchAutoComplete.setAdapter(mapSearchAdapter);
+//                    } else {
+//                        mapSearchAdapter.setDatas(models);
+//                        mapSearchAdapter.notifyDataSetChanged();
+//                    }
+//                } else {
+//                    Toast.makeText(MainActivity.this, "请输入搜索词！", Toast.LENGTH_LONG).show();
+//                }
+//                mapSearchAdapter = null;
                 return false;
             }
 
@@ -215,12 +189,10 @@ public class MainActivity extends BaseMapActivity {
             model.setSelected(true);
             mFMMap.updateMap();
 
-//            FMMapCoord centerMapCoord = model.getCenterMapCoord();
             MapCoord curEndMapCoord = new MapCoord(curGroupId, model.getCenterMapCoord());
             if (!mClickedModel.getName().equals("")) {
                 createPopupWindow(mClickedModel.getName(), "", stCoord, curEndMapCoord, false);
             }
-//            Toast.makeText(MainActivity.this, model.getName(), Toast.LENGTH_LONG).show();
             return true;
         }
 
@@ -333,7 +305,6 @@ public class MainActivity extends BaseMapActivity {
             FMMapCoord mapCoord = model.getCenterMapCoord();
             mFMMap.moveToCenter(mapCoord, false);
 
-//            clearImageMarker();
             MapCoord curEndMapCoord = new MapCoord(curGroupId, mapCoord);
             createPopupWindow(model.getName(), "", stCoord, curEndMapCoord, false);
 
