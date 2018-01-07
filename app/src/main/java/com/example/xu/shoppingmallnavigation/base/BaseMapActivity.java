@@ -175,7 +175,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
             FMImageLayer imageLayer = mFMMap.getFMLayerProxy().createFMImageLayer(tempId);
             mFMMap.addLayer(imageLayer);
 
-            mImageLayers.put(curGroupId, imageLayer);
+            mImageLayers.put(tempId, imageLayer);
         }
 
         //公共设施图层
@@ -271,7 +271,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
      * 清除图片标志
      */
     protected void clearImageMarker() {
-        for (int i = 0; i < mImageLayers.size(); i++) {
+        for (int i = 1; i <= mImageLayers.size(); i++) {
             FMImageLayer temp = mImageLayers.get(i);
             temp.removeAll();
         }
@@ -413,7 +413,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     /**
      * 清空行走的点集合数据
      */
-    private void clearWalkPoints() {
+    protected void clearWalkPoints() {
         mCurrentIndex = 0;
         mNaviPoints.clear();
         mNaviGroupIds.clear();
@@ -538,13 +538,13 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
 
     public abstract void showFailMsg(String msg);
 
-    public abstract void navigationEnd();
+    public abstract void navigationEnd(double angle);
 
     @Override
-    public void onAnimationEnd() {
+    public void onAnimationEnd(double angle) {
         // 已经行走过终点
         if (isWalkComplete()) {
-            navigationEnd();
+            navigationEnd(angle);
             return;
         }
 

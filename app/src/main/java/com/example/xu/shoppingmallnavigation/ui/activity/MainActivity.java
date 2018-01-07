@@ -13,7 +13,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
@@ -25,9 +24,7 @@ import com.example.xu.shoppingmallnavigation.ui.activity.widget.NaviEndPopupWind
 import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
-import com.fengmap.android.map.animator.FMLinearInterpolator;
 import com.fengmap.android.map.event.OnFMNodeListener;
-import com.fengmap.android.map.event.OnFMSwitchGroupListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
 import com.fengmap.android.map.layer.FMFacilityLayer;
 import com.fengmap.android.map.layer.FMModelLayer;
@@ -35,8 +32,8 @@ import com.fengmap.android.map.marker.FMFacility;
 import com.fengmap.android.map.marker.FMLocationMarker;
 import com.fengmap.android.map.marker.FMModel;
 import com.fengmap.android.map.marker.FMNode;
-import com.fengmap.android.widget.FMSwitchFloorComponent;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -67,6 +64,7 @@ public class MainActivity extends BaseMapActivity {
      * 记录上一次行走坐标
      */
     private FMMapCoord mLastMoveCoord;
+    protected double curAngle;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -191,7 +189,7 @@ public class MainActivity extends BaseMapActivity {
 
             MapCoord curEndMapCoord = new MapCoord(curGroupId, model.getCenterMapCoord());
             if (!mClickedModel.getName().equals("")) {
-                createPopupWindow(mClickedModel.getName(), "", stCoord, curEndMapCoord, false);
+                createPopupWindow(mClickedModel.getName(), stCoord, curEndMapCoord, false);
             }
             return true;
         }
@@ -217,7 +215,7 @@ public class MainActivity extends BaseMapActivity {
             mFMMap.updateMap();
 //            FMMapCoord centerMapCoord = facility.getPosition();
             MapCoord curEndMapCoord = new MapCoord(curGroupId, facility.getPosition());
-            createPopupWindow(facility.getName(), "", stCoord, curEndMapCoord, true);
+            createPopupWindow(facility.getName(), stCoord, curEndMapCoord, true);
             return true;
         }
 
@@ -259,14 +257,16 @@ public class MainActivity extends BaseMapActivity {
         }
     };
 
-    private void createPopupWindow(String name, String distance, MapCoord curStartCoord, MapCoord curEndCoord, final boolean isFacility) {
+    private void createPopupWindow(String name, MapCoord curStartCoord, MapCoord curEndCoord, final boolean isFacility) {
         if (popupWindow != null) {
             popupWindow.dismiss();
             popupWindow = null;
         }
         stCoord = curStartCoord;
         endCoord = curEndCoord;
-        popupWindow = new MapPopupWindow(MainActivity.this, listener, name, distance);
+        double distance = ConvertUtils.getDistance(stCoord, endCoord);
+        DecimalFormat df = new DecimalFormat("#.0");
+        popupWindow = new MapPopupWindow(MainActivity.this, listener, name, df.format(distance));
         popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
         popupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
@@ -306,7 +306,7 @@ public class MainActivity extends BaseMapActivity {
             mFMMap.moveToCenter(mapCoord, false);
 
             MapCoord curEndMapCoord = new MapCoord(curGroupId, mapCoord);
-            createPopupWindow(model.getName(), "", stCoord, curEndMapCoord, false);
+            createPopupWindow(model.getName(), stCoord, curEndMapCoord, false);
 
             //添加图片
 //            FMImageMarker imageMarker = MapSearchUtils.buildImageMarker(getResources(), mapCoord);
@@ -423,7 +423,8 @@ public class MainActivity extends BaseMapActivity {
         return currentCoord;
     }
 
-    public void navigationEnd() {
+    public void navigationEnd(double angle) {
+        curAngle = angle;
         // 可记录！！
         runOnUiThread(new Runnable() {
             @Override
@@ -434,16 +435,27 @@ public class MainActivity extends BaseMapActivity {
     }
 
     public void naviEndClosed() {
-        mFMMap.removeLayer(mStartImageLayer);
-        mFMMap.removeLayer(mEndImageLayer);
-        mLineLayer.removeMarker(curFMLineMarker);
-        mLocationLayer.removeMarker(startLocationMarker);
+        clearImageLayer();
+        clearImageMarker();
+        clearLineLayer();
+        clearWalkPoints();
         if (mClickedFacility != null) {
             mClickedFacility.setSelected(false);
         }
         if (mClickedModel != null) {
             mClickedModel.setSelected(false);
         }
+        // 移除原来的定位
+        mLocationLayer.removeMarker(startLocationMarker);
+        // 导航到终点时在当前位置做标记
+        startLocationMarker = new FMLocationMarker(curGroupId, stCoord.getMapCoord());
+        //设置定位点图片
+        startLocationMarker.setActiveImageFromAssets("active.png");
+        //设置定位图片宽高
+        startLocationMarker.setMarkerWidth(80);
+        startLocationMarker.setMarkerHeight(80);
+        startLocationMarker.setAngle((float)curAngle);
+        mLocationLayer.addMarker(startLocationMarker);
         mFMMap.updateMap();
     }
 

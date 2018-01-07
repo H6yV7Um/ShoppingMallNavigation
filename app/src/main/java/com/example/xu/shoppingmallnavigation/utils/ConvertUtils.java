@@ -1,5 +1,6 @@
 package com.example.xu.shoppingmallnavigation.utils;
 
+import com.example.xu.shoppingmallnavigation.bean.MapCoord;
 import com.fengmap.android.analysis.navi.FMNaviDescriptionData;
 import com.fengmap.android.analysis.navi.FMNaviResult;
 import com.fengmap.android.map.FMGroupInfo;
@@ -29,6 +30,19 @@ public class ConvertUtils {
         for (int i = 0; i < size - 1; i++) {
             distance += FMMath.length(points.get(i), points.get(i + 1));
         }
+        return distance;
+    }
+
+    /**
+     * 获取点的集合的数据
+     *
+     * @param stCoord
+     * @param endCoord
+     * @return
+     */
+    public static double getDistance(MapCoord stCoord, MapCoord endCoord) {
+        double distance = 0;
+        distance += FMMath.length(stCoord.getMapCoord(), endCoord.getMapCoord());
         return distance;
     }
 

@@ -30,8 +30,8 @@ public class MapPopupWindow extends PopupWindow {
         parentView = LayoutInflater.from(context).inflate(R.layout.map_popup_window_layout, null);
         initViews(parentView);
         initEvents(itemOnClick);
-        tvName.setText(name);
-        tvDistance.setText(distance);
+        tvName.setText("商店名: " + name);
+        tvDistance.setText("距离你大约" + distance + "米");
         this.setContentView(parentView);
         this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
         this.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);

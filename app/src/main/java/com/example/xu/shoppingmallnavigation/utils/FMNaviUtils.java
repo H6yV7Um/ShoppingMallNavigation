@@ -117,7 +117,7 @@ public class FMNaviUtils {
                     mTimer.purge();
 
                     if (mListener != null) {
-                        mListener.onAnimationEnd();
+                        mListener.onAnimationEnd(angles[mCoordList.size() - 1]);
                     }
                     return;
                 }
@@ -222,7 +222,7 @@ public class FMNaviUtils {
         /**
          * 模拟动画结束
          */
-        void onAnimationEnd();
+        void onAnimationEnd(double angle);
     }
 
 }
