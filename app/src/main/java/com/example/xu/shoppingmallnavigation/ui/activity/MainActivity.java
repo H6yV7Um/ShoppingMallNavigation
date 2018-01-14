@@ -24,6 +24,7 @@ import com.example.xu.shoppingmallnavigation.ui.activity.widget.NaviEndPopupWind
 import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
+import com.fengmap.android.analysis.navi.FMNaviAnalyser;
 import com.fengmap.android.map.event.OnFMNodeListener;
 import com.fengmap.android.map.geometry.FMMapCoord;
 import com.fengmap.android.map.layer.FMFacilityLayer;
@@ -264,9 +265,16 @@ public class MainActivity extends BaseMapActivity {
         }
         stCoord = curStartCoord;
         endCoord = curEndCoord;
-        double distance = ConvertUtils.getDistance(stCoord, endCoord);
+        int type = mNaviAnalyser.analyzeNavi(stCoord.getGroupId(), stCoord.getMapCoord(), endCoord.getGroupId(),
+                endCoord.getMapCoord(), FMNaviAnalyser.FMNaviModule.MODULE_SHORTEST);
+        double distance = 0;
+        if (type == FMNaviAnalyser.FMRouteCalcuResult.ROUTE_SUCCESS) {
+            distance = mNaviAnalyser.getSceneRouteLength();
+        }
+//        double distance = ConvertUtils.getDistance(stCoord, endCoord);
         DecimalFormat df = new DecimalFormat("#.0");
         popupWindow = new MapPopupWindow(MainActivity.this, listener, name, df.format(distance));
+//        popupWindow = new MapPopupWindow(MainActivity.this, listener, name, String.valueOf(distance));
         popupWindow.showAtLocation(findViewById(R.id.map_main_ll),
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
         popupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
