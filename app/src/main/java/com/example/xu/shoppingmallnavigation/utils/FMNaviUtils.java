@@ -129,6 +129,7 @@ public class FMNaviUtils {
 
                 if (mListener != null) {
                     mListener.onAnimationUpdate(mCoordList.get(mIndex), mWalkStep, angles[mIndex]);
+                    mListener.onNaviRouteDescriptionChanged(mIndex);
                 }
 
                 mIndex++;
@@ -218,6 +219,8 @@ public class FMNaviUtils {
          * @param angle    当前点角度
          */
         void onAnimationUpdate(FMMapCoord mapCoord, double distance, double angle);
+
+        void onNaviRouteDescriptionChanged(int index);
 
         /**
          * 模拟动画结束

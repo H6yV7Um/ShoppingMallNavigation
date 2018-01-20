@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
@@ -438,6 +439,18 @@ public class MainActivity extends BaseMapActivity {
             @Override
             public void run() {
                 createNaviEndPopupWindow();
+            }
+        });
+    }
+
+    @Override
+    public void onNaviRouteDescriptionChanged(final int index) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mNaviDescriptionResults.size() > index) {
+                    Toast.makeText(MainActivity.this, mNaviDescriptionResults.get(index), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

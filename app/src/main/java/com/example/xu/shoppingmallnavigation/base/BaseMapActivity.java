@@ -121,6 +121,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
             }
         }
     };
+    protected ArrayList<String> mNaviDescriptionResults;
 
     private static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
@@ -313,6 +314,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         if (type == FMNaviAnalyser.FMRouteCalcuResult.ROUTE_SUCCESS) {
             fillWithPoints();
             addLineMarker();
+            mNaviDescriptionResults = mNaviAnalyser.getNaviDescription();
         }
         startWalkingRouteLine();
     }
@@ -545,6 +547,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         // 已经行走过终点
         if (isWalkComplete()) {
             navigationEnd(angle);
+            mNaviDescriptionResults = null;
             return;
         }
 
