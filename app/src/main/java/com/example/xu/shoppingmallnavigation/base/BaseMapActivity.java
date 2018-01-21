@@ -20,6 +20,7 @@ import com.example.xu.shoppingmallnavigation.utils.FMNaviUtils;
 import com.example.xu.shoppingmallnavigation.utils.FileUtils;
 import com.fengmap.android.FMErrorMsg;
 import com.fengmap.android.analysis.navi.FMNaviAnalyser;
+import com.fengmap.android.analysis.navi.FMNaviDescriptionData;
 import com.fengmap.android.analysis.navi.FMNaviResult;
 import com.fengmap.android.analysis.search.FMSearchAnalyser;
 import com.fengmap.android.exception.FMObjectException;
@@ -122,6 +123,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         }
     };
     protected ArrayList<String> mNaviDescriptionResults;
+    protected ArrayList<FMNaviDescriptionData> mNaviPointsDatas;
 
     private static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
@@ -315,6 +317,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
             fillWithPoints();
             addLineMarker();
             mNaviDescriptionResults = mNaviAnalyser.getNaviDescription();
+            mNaviPointsDatas = mNaviAnalyser.getNaviDescriptionData();
         }
         startWalkingRouteLine();
     }

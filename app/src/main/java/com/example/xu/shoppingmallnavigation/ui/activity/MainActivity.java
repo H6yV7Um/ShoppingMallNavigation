@@ -67,6 +67,7 @@ public class MainActivity extends BaseMapActivity {
      */
     private FMMapCoord mLastMoveCoord;
     protected double curAngle;
+    protected int curNaviRoutesIndex = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -82,7 +83,7 @@ public class MainActivity extends BaseMapActivity {
         for (FMModelLayer mModelLayer : mModelLayers) {
             mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
         }
-        for (FMFacilityLayer mFacilityLayer: mFacilityLayers) {
+        for (FMFacilityLayer mFacilityLayer : mFacilityLayers) {
             mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
         }
         curGroupId = 1;
@@ -351,7 +352,6 @@ public class MainActivity extends BaseMapActivity {
 //        }
 //        mFMMap.updateMap();
 //    }
-
     private void clearModelAll(FMModel model) {
         if (!model.equals(mClickedFacility)) {
             if (mLastClicked != null) {
@@ -387,8 +387,18 @@ public class MainActivity extends BaseMapActivity {
     }
 
     @Override
-    public void onAnimationUpdate(FMMapCoord mapCoord, double distance, double angle) {
+    public void onAnimationUpdate(final int mIndex, FMMapCoord mapCoord, double distance, double angle) {
         updateHandledMarker(mapCoord, angle);
+        if (curAngle == 0 || curAngle != angle && curNaviRoutesIndex < mNaviDescriptionResults.size()) {
+            curAngle = angle;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MainActivity.this, mNaviDescriptionResults.get(curNaviRoutesIndex), Toast.LENGTH_SHORT).show();
+                    curNaviRoutesIndex++;
+                }
+            });
+        }
     }
 
     /**
@@ -434,6 +444,7 @@ public class MainActivity extends BaseMapActivity {
 
     public void navigationEnd(double angle) {
         curAngle = angle;
+        curNaviRoutesIndex = 0;
         // 可记录！！
         runOnUiThread(new Runnable() {
             @Override
@@ -443,17 +454,6 @@ public class MainActivity extends BaseMapActivity {
         });
     }
 
-    @Override
-    public void onNaviRouteDescriptionChanged(final int index) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (mNaviDescriptionResults.size() > index) {
-                    Toast.makeText(MainActivity.this, mNaviDescriptionResults.get(index), Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-    }
 
     public void naviEndClosed() {
         clearImageLayer();
@@ -475,7 +475,7 @@ public class MainActivity extends BaseMapActivity {
         //设置定位图片宽高
         startLocationMarker.setMarkerWidth(80);
         startLocationMarker.setMarkerHeight(80);
-        startLocationMarker.setAngle((float)curAngle);
+        startLocationMarker.setAngle((float) curAngle);
         mLocationLayer.addMarker(startLocationMarker);
         mFMMap.updateMap();
     }
