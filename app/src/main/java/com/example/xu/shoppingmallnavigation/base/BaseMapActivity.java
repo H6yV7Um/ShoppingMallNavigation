@@ -10,9 +10,14 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.bean.MapCoord;
 import com.example.xu.shoppingmallnavigation.helper.ViewHelper;
@@ -125,7 +130,19 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     protected ArrayList<String> mNaviDescriptionResults;
     protected ArrayList<FMNaviDescriptionData> mNaviPointsDatas;
 
-    private static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    //声明AMapLocationClient类对象
+    public AMapLocationClient mLocationClient;
+    //声明定位回调监听器
+    public AMapLocationListener mLocationListener;
+    //声明AMapLocationClientOption对象
+    public AMapLocationClientOption mLocationOption = null;
+
+
+    public double curLongitude;
+    public double curLatitude;
+    public String curFloor;
+
+    private static int MY_PERMISSIONS_REQUEST = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -138,11 +155,16 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         if (Build.VERSION.SDK_INT >= 23) {
             if (ContextCompat.checkSelfPermission(this,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
+                    != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                            != PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED) {
 
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE
+                                , Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST);
             } else {
                 openMapByPath();
             }
@@ -155,6 +177,42 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
      * 加载地图数据
      */
     private void openMapByPath() {
+
+//        Log.i("test", TestUtil.sHA1(this));
+
+        mLocationListener = new AMapLocationListener() {
+            @Override
+            public void onLocationChanged(AMapLocation aMapLocation) {
+                if (aMapLocation != null) {
+                    if (aMapLocation.getErrorCode() == 0) {
+                        //可在其中解析amapLocation获取相应内容。
+                        curLongitude = aMapLocation.getLongitude();
+                        curLatitude = aMapLocation.getLatitude();
+                        curFloor = aMapLocation.getFloor();
+                        Log.i("test", "location longitude: " + curLongitude + ", latitude: " + curLatitude + ", floor: " + curFloor);
+                    } else {
+                        //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
+                        Log.e("AmapError", "location Error, ErrCode:"
+                                + aMapLocation.getErrorCode() + ", errInfo:"
+                                + aMapLocation.getErrorInfo());
+                    }
+                }
+            }
+        };
+        //初始化定位
+        mLocationClient = new AMapLocationClient(getApplicationContext());
+        mLocationClient.setLocationListener(mLocationListener);
+        //初始化AMapLocationClientOption对象
+        mLocationOption = new AMapLocationClientOption();
+        mLocationOption.setLocationPurpose(AMapLocationClientOption.AMapLocationPurpose.Transport);
+        mLocationOption.setInterval(5000);
+        if (null != mLocationClient) {
+            mLocationClient.setLocationOption(mLocationOption);
+            //设置场景模式后最好调用一次stop，再调用start以保证场景模式生效
+            mLocationClient.stopLocation();
+            mLocationClient.startLocation();
+        }
+
         mMapView = findViewById(getMapViewId());
         mFMMap = mMapView.getFMMap();
         mFMMap.setOnFMMapInitListener(this);
@@ -206,6 +264,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         mFMMap.addLayer(mLocationLayer);
 
         stCoord = new MapCoord(1, new FMMapCoord(12961647.576796599, 4861814.63807118));
+//        stCoord = new MapCoord(Integer.valueOf(curFloor), new FMMapCoord(curLongitude, curLatitude));
         endCoord = null;
         //真实定位返回的地图坐标mapCoord和角度angle
         startLocationMarker = new FMLocationMarker(curGroupId, stCoord.getMapCoord());
@@ -533,6 +592,18 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
         return false;
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mLocationClient.stopLocation();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mLocationClient.onDestroy();
+    }
+
     public abstract int getLayoutId();
 
     public abstract int getMapViewId();
@@ -562,7 +633,7 @@ public abstract class BaseMapActivity extends AppCompatActivity implements OnFMM
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 
-        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
+        if (requestCode == MY_PERMISSIONS_REQUEST) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 openMapByPath();
             } else {
