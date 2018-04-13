@@ -1,7 +1,7 @@
 package com.example.xu.shoppingmallnavigation.base;
 
 /**
- * Created by zhaoxuzhang on 2017/11/27.
+ * Created by Xu on 2017/11/27.
  */
 
 public interface BaseView {

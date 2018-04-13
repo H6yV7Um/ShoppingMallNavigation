@@ -2,6 +2,7 @@ package com.example.xu.shoppingmallnavigation.ui.activity;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -11,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,9 +21,11 @@ import com.example.xu.shoppingmallnavigation.R;
 import com.example.xu.shoppingmallnavigation.base.BaseMapActivity;
 import com.example.xu.shoppingmallnavigation.bean.MapCoord;
 import com.example.xu.shoppingmallnavigation.helper.ViewHelper;
+import com.example.xu.shoppingmallnavigation.helper.WalkAroundHelper;
 import com.example.xu.shoppingmallnavigation.ui.activity.adapter.MapSearchAdapter;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.MapPopupWindow;
 import com.example.xu.shoppingmallnavigation.ui.activity.widget.NaviEndPopupWindow;
+import com.example.xu.shoppingmallnavigation.ui.activity.widget.WalkAroundPopupWindow;
 import com.example.xu.shoppingmallnavigation.utils.ConvertUtils;
 import com.example.xu.shoppingmallnavigation.utils.KeyBoardUtils;
 import com.example.xu.shoppingmallnavigation.utils.MapSearchUtils;
@@ -40,6 +44,7 @@ import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by Xu on 2017/11/26.
@@ -47,17 +52,19 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends BaseMapActivity {
 
+    protected double curAngle;
     @BindView(R.id.toolbar)
     Toolbar toolbar;
-
     @BindView(R.id.mapview_error)
     TextView tvError;
-
+    @BindView(R.id.walk_around_fab)
+    FloatingActionButton fabWalkAround;
     private SearchView mSearchView;
     private MapSearchAdapter mapSearchAdapter;
     private SearchView.SearchAutoComplete mSearchAutoComplete;
     private MapPopupWindow popupWindow;
     private NaviEndPopupWindow naviEndPopupWindow;
+    private WalkAroundPopupWindow walkAroundPopupWindow;
     /**
      * 约束过定位标注
      */
@@ -66,7 +73,118 @@ public class MainActivity extends BaseMapActivity {
      * 记录上一次行走坐标
      */
     private FMMapCoord mLastMoveCoord;
-    protected double curAngle;
+    //为弹出窗口实现监听类
+    private View.OnClickListener listener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // 隐藏弹出窗口
+            switch (v.getId()) {
+                case R.id.map_navi_bt:
+                    if (popupWindow != null) {
+                        popupWindow.dismiss();
+                        popupWindow = null;
+                    }
+                    if (mSearchView != null) {
+                        mSearchView.clearFocus();
+                    }
+                    analyzeNavigation(stCoord, endCoord);
+                    // 将当前终点置为起点
+                    stCoord = endCoord;
+                    endCoord = null;
+                    break;
+                case R.id.navi_end_close_bt:
+                    if (naviEndPopupWindow != null) {
+                        naviEndPopupWindow.dismiss();
+                        naviEndPopupWindow = null;
+                    }
+                    naviEndClosed();
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+    /**
+     * 模型点击事件
+     */
+    private OnFMNodeListener mOnFMNodeListener = new OnFMNodeListener() {
+        @Override
+        public boolean onClick(FMNode node) {
+            if (mClickedModel != null) {
+                mClickedModel.setSelected(false);
+            }
+            FMModel model = (FMModel) node;
+            mClickedModel = model;
+
+            model.setSelected(true);
+            mFMMap.updateMap();
+
+            MapCoord curEndMapCoord = new MapCoord(curGroupId, model.getCenterMapCoord());
+            if (!mClickedModel.getName().equals("")) {
+                createPopupWindow(mClickedModel.getName(), stCoord, curEndMapCoord, false);
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onLongPress(FMNode node) {
+            return false;
+        }
+    };
+    /**
+     * 公共设施点击事件
+     */
+    private OnFMNodeListener mOnFacilityClickListener = new OnFMNodeListener() {
+        @Override
+        public boolean onClick(FMNode node) {
+            if (mClickedFacility != null) {
+                mClickedFacility.setSelected(false);
+            }
+            FMFacility facility = (FMFacility) node;
+            mClickedFacility = facility;
+            facility.setSelected(true);
+            mFMMap.updateMap();
+//            FMMapCoord centerMapCoord = facility.getPosition();
+            MapCoord curEndMapCoord = new MapCoord(curGroupId, facility.getPosition());
+            createPopupWindow(facility.getName(), stCoord, curEndMapCoord, true);
+            return true;
+        }
+
+        @Override
+        public boolean onLongPress(FMNode node) {
+            return false;
+        }
+    };
+    private AdapterView.OnItemClickListener searchItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+            //关闭软键盘
+            KeyBoardUtils.closeKeybord(mSearchAutoComplete, MainActivity.this);
+
+            final FMModel model = (FMModel) adapterView.getItemAtPosition(position);
+            mClickedModel = model;
+            model.setSelected(true);
+            mFMMap.updateMap();
+
+            //切换楼层
+            int groupId = model.getGroupId();
+            if (groupId != mFMMap.getFocusGroupId()) {
+                mFMMap.setFocusByGroupId(groupId, null);
+            }
+
+            //移动至中心点
+            FMMapCoord mapCoord = model.getCenterMapCoord();
+            mFMMap.moveToCenter(mapCoord, false);
+
+            MapCoord curEndMapCoord = new MapCoord(curGroupId, mapCoord);
+            createPopupWindow(model.getName(), stCoord, curEndMapCoord, false);
+
+            //添加图片
+//            FMImageMarker imageMarker = MapSearchUtils.buildImageMarker(getResources(), mapCoord);
+//            mImageLayers.get(model.getGroupId()).addMarker(imageMarker);
+
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -82,7 +200,7 @@ public class MainActivity extends BaseMapActivity {
         for (FMModelLayer mModelLayer : mModelLayers) {
             mModelLayer.setOnFMNodeListener(mOnFMNodeListener);
         }
-        for (FMFacilityLayer mFacilityLayer: mFacilityLayers) {
+        for (FMFacilityLayer mFacilityLayer : mFacilityLayers) {
             mFacilityLayer.setOnFMNodeListener(mOnFacilityClickListener);
         }
         curGroupId = 1;
@@ -118,6 +236,34 @@ public class MainActivity extends BaseMapActivity {
         Log.i("shopping", msg);
         tvError.setVisibility(View.VISIBLE);
         mMapView.setVisibility(View.GONE);
+    }
+
+    public void navigationEnd(double angle) {
+        curAngle = angle;
+        // 可记录！！
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                createNaviEndPopupWindow();
+            }
+        });
+    }
+
+    private void createNaviEndPopupWindow() {
+        if (naviEndPopupWindow != null) {
+            naviEndPopupWindow.dismiss();
+            naviEndPopupWindow = null;
+        }
+        naviEndPopupWindow = new NaviEndPopupWindow(MainActivity.this, listener);
+        naviEndPopupWindow.showAtLocation(findViewById(R.id.map_main_ll),
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+        naviEndPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                naviEndPopupWindow.dismiss();
+                naviEndPopupWindow = null;
+            }
+        });
     }
 
     @Override
@@ -171,93 +317,21 @@ public class MainActivity extends BaseMapActivity {
                 return false;
             }
         });
+
         return true;
     }
 
     /**
-     * 模型点击事件
+     * 通过关键字查询模型
+     *
+     * @param keyword 关键字
      */
-    private OnFMNodeListener mOnFMNodeListener = new OnFMNodeListener() {
-        @Override
-        public boolean onClick(FMNode node) {
-            if (mClickedModel != null) {
-                mClickedModel.setSelected(false);
-            }
-            FMModel model = (FMModel) node;
-            mClickedModel = model;
-
-            model.setSelected(true);
-            mFMMap.updateMap();
-
-            MapCoord curEndMapCoord = new MapCoord(curGroupId, model.getCenterMapCoord());
-            if (!mClickedModel.getName().equals("")) {
-                createPopupWindow(mClickedModel.getName(), stCoord, curEndMapCoord, false);
-            }
-            return true;
-        }
-
-        @Override
-        public boolean onLongPress(FMNode node) {
-            return false;
-        }
-    };
-
-    /**
-     * 公共设施点击事件
-     */
-    private OnFMNodeListener mOnFacilityClickListener = new OnFMNodeListener() {
-        @Override
-        public boolean onClick(FMNode node) {
-            if (mClickedFacility != null) {
-                mClickedFacility.setSelected(false);
-            }
-            FMFacility facility = (FMFacility) node;
-            mClickedFacility = facility;
-            facility.setSelected(true);
-            mFMMap.updateMap();
-//            FMMapCoord centerMapCoord = facility.getPosition();
-            MapCoord curEndMapCoord = new MapCoord(curGroupId, facility.getPosition());
-            createPopupWindow(facility.getName(), stCoord, curEndMapCoord, true);
-            return true;
-        }
-
-        @Override
-        public boolean onLongPress(FMNode node) {
-            return false;
-        }
-    };
-
-    //为弹出窗口实现监听类
-    private View.OnClickListener listener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // 隐藏弹出窗口
-            switch (v.getId()) {
-                case R.id.map_navi_bt:
-                    if (popupWindow != null) {
-                        popupWindow.dismiss();
-                        popupWindow = null;
-                    }
-                    if (mSearchView != null) {
-                        mSearchView.clearFocus();
-                    }
-                    analyzeNavigation(stCoord, endCoord);
-                    // 将当前终点置为起点
-                    stCoord = endCoord;
-                    endCoord = null;
-                    break;
-                case R.id.navi_end_close_bt:
-                    if (naviEndPopupWindow != null) {
-                        naviEndPopupWindow.dismiss();
-                        naviEndPopupWindow = null;
-                    }
-                    naviEndClosed();
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+    private ArrayList<FMModel> queryModelByKeyword(String keyword) {
+        //查询楼层集合
+        int[] groupIds = {mFMMap.getFocusGroupId()};
+        //搜索请求
+        return MapSearchUtils.queryModelByKeyword(mFMMap, groupIds, mSearchAnalyser, keyword);
+    }
 
     private void createPopupWindow(String name, MapCoord curStartCoord, MapCoord curEndCoord, final boolean isFacility) {
         if (popupWindow != null) {
@@ -292,48 +366,15 @@ public class MainActivity extends BaseMapActivity {
         });
     }
 
-
-    private AdapterView.OnItemClickListener searchItemClickListener = new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-            //关闭软键盘
-            KeyBoardUtils.closeKeybord(mSearchAutoComplete, MainActivity.this);
-
-            final FMModel model = (FMModel) adapterView.getItemAtPosition(position);
-            mClickedModel = model;
-            model.setSelected(true);
-            mFMMap.updateMap();
-
-            //切换楼层
-            int groupId = model.getGroupId();
-            if (groupId != mFMMap.getFocusGroupId()) {
-                mFMMap.setFocusByGroupId(groupId, null);
+    private void clearFacilityAll(FMFacility facility) {
+        if (!facility.equals(mClickedFacility)) {
+            if (mClickedFacility != null) {
+                mClickedFacility.setSelected(false);
             }
-
-            //移动至中心点
-            FMMapCoord mapCoord = model.getCenterMapCoord();
-            mFMMap.moveToCenter(mapCoord, false);
-
-            MapCoord curEndMapCoord = new MapCoord(curGroupId, mapCoord);
-            createPopupWindow(model.getName(), stCoord, curEndMapCoord, false);
-
-            //添加图片
-//            FMImageMarker imageMarker = MapSearchUtils.buildImageMarker(getResources(), mapCoord);
-//            mImageLayers.get(model.getGroupId()).addMarker(imageMarker);
-
+            this.mClickedFacility = facility;
+            this.mClickedFacility.setSelected(false);
         }
-    };
-
-    /**
-     * 通过关键字查询模型
-     *
-     * @param keyword 关键字
-     */
-    private ArrayList<FMModel> queryModelByKeyword(String keyword) {
-        //查询楼层集合
-        int[] groupIds = {mFMMap.getFocusGroupId()};
-        //搜索请求
-        return MapSearchUtils.queryModelByKeyword(mFMMap, groupIds, mSearchAnalyser, keyword);
+        mFMMap.updateMap();
     }
 
     /**
@@ -351,7 +392,6 @@ public class MainActivity extends BaseMapActivity {
 //        }
 //        mFMMap.updateMap();
 //    }
-
     private void clearModelAll(FMModel model) {
         if (!model.equals(mClickedFacility)) {
             if (mLastClicked != null) {
@@ -359,17 +399,6 @@ public class MainActivity extends BaseMapActivity {
             }
             this.mLastClicked = model;
             this.mLastClicked.setSelected(false);
-        }
-        mFMMap.updateMap();
-    }
-
-    private void clearFacilityAll(FMFacility facility) {
-        if (!facility.equals(mClickedFacility)) {
-            if (mClickedFacility != null) {
-                mClickedFacility.setSelected(false);
-            }
-            this.mClickedFacility = facility;
-            this.mClickedFacility.setSelected(false);
         }
         mFMMap.updateMap();
     }
@@ -432,17 +461,6 @@ public class MainActivity extends BaseMapActivity {
         return currentCoord;
     }
 
-    public void navigationEnd(double angle) {
-        curAngle = angle;
-        // 可记录！！
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                createNaviEndPopupWindow();
-            }
-        });
-    }
-
     @Override
     public void onNaviRouteDescriptionChanged(final int index) {
         runOnUiThread(new Runnable() {
@@ -475,26 +493,33 @@ public class MainActivity extends BaseMapActivity {
         //设置定位图片宽高
         startLocationMarker.setMarkerWidth(80);
         startLocationMarker.setMarkerHeight(80);
-        startLocationMarker.setAngle((float)curAngle);
+        startLocationMarker.setAngle((float) curAngle);
         mLocationLayer.addMarker(startLocationMarker);
         mFMMap.updateMap();
     }
 
-    private void createNaviEndPopupWindow() {
-        if (naviEndPopupWindow != null) {
-            naviEndPopupWindow.dismiss();
-            naviEndPopupWindow = null;
+    @OnClick(R.id.walk_around_fab)
+    public void walk_around() {
+        createWalkAroundPopupWindow();
+    }
+
+    private void createWalkAroundPopupWindow() {
+        if (walkAroundPopupWindow != null) {
+            walkAroundPopupWindow.dismiss();
+            walkAroundPopupWindow = null;
         }
-        naviEndPopupWindow = new NaviEndPopupWindow(MainActivity.this, listener);
-        naviEndPopupWindow.showAtLocation(findViewById(R.id.map_main_ll),
+        String[] data = WalkAroundHelper.getData(mFMMap, mSearchAnalyser);
+        ArrayAdapter arrayAdapter = new ArrayAdapter<>(MainActivity.this,
+                android.R.layout.simple_list_item_1, data);
+        walkAroundPopupWindow = new WalkAroundPopupWindow(this, arrayAdapter);
+        walkAroundPopupWindow.showAtLocation(findViewById(R.id.map_main_ll),
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
-        naviEndPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
+        walkAroundPopupWindow.dismissOutSide(MainActivity.this, new PopupWindow.OnDismissListener() {
             @Override
             public void onDismiss() {
-                naviEndPopupWindow.dismiss();
-                naviEndPopupWindow = null;
+                walkAroundPopupWindow.dismiss();
+                walkAroundPopupWindow = null;
             }
         });
     }
-
 }
