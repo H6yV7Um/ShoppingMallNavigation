@@ -128,8 +128,7 @@ public class FMNaviUtils {
                 }
 
                 if (mListener != null) {
-                    mListener.onAnimationUpdate(mCoordList.get(mIndex), mWalkStep, angles[mIndex]);
-                    mListener.onNaviRouteDescriptionChanged(mIndex);
+                    mListener.onAnimationUpdate(mIndex, mCoordList.get(mIndex), mWalkStep, angles[mIndex]);
                 }
 
                 mIndex++;
@@ -214,13 +213,12 @@ public class FMNaviUtils {
         /**
          * 模拟动画更新
          *
+         * @param index
          * @param mapCoord 当前点坐标
          * @param distance 行走距离
          * @param angle    当前点角度
          */
-        void onAnimationUpdate(FMMapCoord mapCoord, double distance, double angle);
-
-        void onNaviRouteDescriptionChanged(int index);
+        void onAnimationUpdate(int index, FMMapCoord mapCoord, double distance, double angle);
 
         /**
          * 模拟动画结束
