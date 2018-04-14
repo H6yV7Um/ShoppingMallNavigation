@@ -8,11 +8,15 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 
 import com.example.xu.shoppingmallnavigation.R;
+import com.fengmap.android.map.marker.FMModel;
+
+import java.util.ArrayList;
 
 /**
  * Created by Xu on 2018/4/13.
@@ -24,11 +28,16 @@ public class WalkAroundPopupWindow extends PopupWindow {
     private View parentView;
     private ListView listView;
     private ArrayAdapter adapter;
+    private ArrayList<ArrayList<FMModel>> data;
+    private AdapterView.OnItemClickListener listener;
 
-    public WalkAroundPopupWindow(Context context, ArrayAdapter adapter) {
+    public WalkAroundPopupWindow(Context context, ArrayAdapter adapter,
+                                 ArrayList<ArrayList<FMModel>> data, AdapterView.OnItemClickListener listener) {
         super(context);
         parentView = LayoutInflater.from(context).inflate(R.layout.walk_around_popup_window_layout, null);
+        this.listener = listener;
         this.adapter = adapter;
+        this.data = data;
         initViews(parentView);
         this.setContentView(parentView);
         this.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
@@ -59,6 +68,7 @@ public class WalkAroundPopupWindow extends PopupWindow {
     private void initViews(View parentView) {
         listView = parentView.findViewById(R.id.walk_around_lv);
         listView.setAdapter(adapter);
+        listView.setOnItemClickListener(listener);
     }
 
     public void setBackgroundAlpha(Activity activity, float bgAlpha) {
